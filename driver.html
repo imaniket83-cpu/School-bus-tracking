@@ -21,6 +21,14 @@
         .btn.ready:active { transform: scale(0.98); }
         .btn.done { background-color: #6c757d; cursor: not-allowed; }
     </style>
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
 </head>
 <body>
     <div class="header">🚍 Morning Route</div>
