@@ -119,9 +119,10 @@
         </div>
     </div>
 
+    <!-- Custom Alarm Popup Window -->
     <div id="custom-alert">
         <div class="alert-box">
-            <h2>🔔 Bus is Arriving!</h2>
+            <h2>🚌 Bus is Here!</h2>
             <p style="color:#444; font-size:16px;">The school bus is very near to your location. Please get ready!</p>
             <button class="alert-btn" onclick="document.getElementById('custom-alert').style.display='none'">OK, I got it</button>
         </div>
@@ -279,16 +280,21 @@
             showScreen('login-screen');
         }
 
+        // NAYA: Bus Horn aur Auto-Close (Hands-Free) Logic
         function playAlarm() {
-            let beeps = 0;
             if(navigator.vibrate) { navigator.vibrate([1000, 500, 1000, 500, 1000]); }
 
-            let beepInterval = setInterval(() => {
-                let alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
-                alarmSound.play().catch(e => console.log("Audio blocked by browser settings"));
-                beeps++;
-                if(beeps >= 3) { clearInterval(beepInterval); }
-            }, 2500); 
+            // Lagaatar bajne wala aawaz (Car/Bus horn jaisa beep)
+            let hornSound = new Audio('https://actions.google.com/sounds/v1/alarms/analog_watch_alarm.ogg');
+            hornSound.loop = true;
+            hornSound.play().catch(e => console.log("Audio blocked by browser settings"));
+
+            // 4.5 seconds baad horn ruk jayega aur popup bhi apne aap gayab ho jayega
+            setTimeout(() => {
+                hornSound.pause();
+                hornSound.currentTime = 0;
+                document.getElementById('custom-alert').style.display = 'none'; // Auto-close popup
+            }, 4500); 
         }
 
         function trackChild(childName, busId, childId) {
