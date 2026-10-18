@@ -3,34 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parent App - Live Tracking</title>
+    <title>Parent App - Live Map</title>
+    
+    <!-- Map ki CSS file -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; text-align: center; }
         .header { background-color: #007bff; color: white; padding: 18px; font-size: 20px; font-weight: 800; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .container { padding: 20px; }
-        .status-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-top: 20px; border-top: 5px solid #007bff; }
-        .student-name { font-size: 28px; font-weight: bold; margin: 15px 0; color: #333; }
-        .badge { padding: 12px 25px; font-size: 18px; border-radius: 30px; font-weight: bold; display: inline-block; transition: 0.3s; }
+        .status-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 5px solid #007bff; }
+        .student-name { font-size: 24px; font-weight: bold; margin: 10px 0; color: #333; }
+        .badge { padding: 8px 20px; font-size: 16px; border-radius: 30px; font-weight: bold; display: inline-block; }
         .pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
         .boarded { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .info-text { color: #666; font-size: 14px; margin-bottom: 5px; }
+        
+        /* Map ka design */
+        #map { height: 400px; width: 100%; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 1; }
+        .custom-bus-icon { background: none; border: none; }
     </style>
 </head>
 <body>
     <div class="header">👪 Parent Dashboard</div>
     
     <div class="container">
+        <!-- Student Status Card -->
         <div class="status-card">
-            <div class="info-text">Student Name</div>
+            <div style="color: #666; font-size: 14px;">Student Status</div>
             <div class="student-name" id="p-student-name">Loading...</div>
-            <div class="info-text">Current Status</div>
             <div class="badge pending" id="p-status-badge">Fetching...</div>
         </div>
+
+        <!-- Live Map Box -->
+        <div id="map"></div>
     </div>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Map ki JS file -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
         const firebaseConfig = {
@@ -44,29 +57,21 @@
             measurementId: "G-DQCZ4N7YVN"
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // URL se bachhe ka ID nikalna 
+        // 1. URL Parameter se Student ID nikalna
         const urlParams = new URLSearchParams(window.location.search);
-        let studentId = urlParams.get('id');
-
-        // Agar URL me ID nahi hai, to default student-01 dikhayega
-        if(!studentId) {
-            studentId = 'student-01'; 
-        }
+        let studentId = urlParams.get('id') || 'student-01'; 
 
         const nameElement = document.getElementById('p-student-name');
         const badgeElement = document.getElementById('p-status-badge');
 
-        // Firebase se us specific bacche ka live data read karna
+        // 2. Student ka status update karna
         database.ref('student/' + studentId).on('value', (snapshot) => {
             const data = snapshot.val();
             if(data) {
                 nameElement.innerText = data.name;
-                
                 if(data.status === "Boarded") {
                     badgeElement.innerHTML = "Boarded ✅";
                     badgeElement.className = "badge boarded";
@@ -75,9 +80,37 @@
                     badgeElement.className = "badge pending";
                 }
             } else {
-                nameElement.innerText = "Student Not Found";
-                badgeElement.innerHTML = "Error ❌";
-                badgeElement.className = "badge pending";
+                nameElement.innerText = "Not Found";
+            }
+        });
+
+        // 3. MAP SETUP
+        let map = L.map('map').setView([20.5937, 78.9629], 5); // Default zoom level
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        let busMarker = null;
+        let busIcon = L.divIcon({
+            html: '<div style="font-size: 35px;">🚍</div>',
+            className: 'custom-bus-icon',
+            iconSize: [35, 35],
+            iconAnchor: [17, 17] // Center me rakhne ke liye
+        });
+
+        // 4. Live Bus Location Firebase se track karna
+        database.ref('busLocation').on('value', (snapshot) => {
+            const loc = snapshot.val();
+            if(loc && loc.lat && loc.lng) {
+                if(!busMarker) {
+                    // Agar pehli baar location aayi, to map par bus banao
+                    busMarker = L.marker([loc.lat, loc.lng], {icon: busIcon}).addTo(map);
+                    map.setView([loc.lat, loc.lng], 16); // Map ko zoom karke bus par focus karo
+                } else {
+                    // Agar bas move hui hai, to icon ko naye coordinates par bhejo
+                    busMarker.setLatLng([loc.lat, loc.lng]);
+                    map.setView([loc.lat, loc.lng]); 
+                }
             }
         });
     </script>
