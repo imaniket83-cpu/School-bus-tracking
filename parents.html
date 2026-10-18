@@ -3,57 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parent App - Live Map</title>
+    <title>Parent Portal - Bus Tracker</title>
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#17a2b8">
     
-    <!-- Map ki CSS file -->
+    <!-- Leaflet CSS for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; text-align: center; }
-        .header { background-color: #007bff; color: white; padding: 18px; font-size: 20px; font-weight: 800; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .container { padding: 20px; }
-        .status-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 5px solid #007bff; }
-        .student-name { font-size: 24px; font-weight: bold; margin: 10px 0; color: #333; }
-        .badge { padding: 8px 20px; font-size: 16px; border-radius: 30px; font-weight: bold; display: inline-block; }
-        .pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
-        .boarded { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6;}
         
-        /* Map ka design */
-        #map { height: 400px; width: 100%; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 1; }
-        .custom-bus-icon { background: none; border: none; }
+        /* Map aur Panel ka design */
+        #map { width: 100%; height: 75vh; z-index: 1; }
+        
+        .info-panel { padding: 25px 20px; background: white; height: 25vh; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-top-left-radius: 25px; border-top-right-radius: 25px; position: relative; z-index: 1000; margin-top: -20px; text-align: center; }
+        .status { font-size: 22px; font-weight: 900; margin-bottom: 8px; color: #333; }
+        .details { color: #666; font-size: 15px; font-weight: 500; }
+        .header-bar { width: 50px; height: 5px; background: #ddd; border-radius: 5px; margin: 0 auto 15px auto; }
     </style>
-    <!-- PWA Setup -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#007bff">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-    </script>
 </head>
 <body>
-    <div class="header">👪 Parent Dashboard</div>
-    
-    <div class="container">
-        <!-- Student Status Card -->
-        <div class="status-card">
-            <div style="color: #666; font-size: 14px;">Student Status</div>
-            <div class="student-name" id="p-student-name">Loading...</div>
-            <div class="badge pending" id="p-status-badge">Fetching...</div>
-        </div>
 
-        <!-- Live Map Box -->
-        <div id="map"></div>
+    <!-- Map Yahan Dikhega -->
+    <div id="map"></div>
+    
+    <!-- Neeche ka Info Panel -->
+    <div class="info-panel">
+        <div class="header-bar"></div>
+        <div class="status" id="status-text">🚌 Tracking Bus...</div>
+        <div class="details" id="dist-text">Waiting for driver to start route...</div>
     </div>
 
-    <!-- Firebase SDKs -->
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
-    <!-- Map ki JS file -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
             authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
@@ -64,61 +52,46 @@
             appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff",
             measurementId: "G-DQCZ4N7YVN"
         };
-
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
 
-        // 1. URL Parameter se Student ID nikalna
-        const urlParams = new URLSearchParams(window.location.search);
-        let studentId = urlParams.get('id') || 'student-01'; 
+        // 1. Map Initialize karein
+        const map = L.map('map').setView([20.5937, 78.9629], 5); 
 
-        const nameElement = document.getElementById('p-student-name');
-        const badgeElement = document.getElementById('p-status-badge');
-
-        // 2. Student ka status update karna
-        database.ref('student/' + studentId).on('value', (snapshot) => {
-            const data = snapshot.val();
-            if(data) {
-                nameElement.innerText = data.name;
-                if(data.status === "Boarded") {
-                    badgeElement.innerHTML = "Boarded ✅";
-                    badgeElement.className = "badge boarded";
-                } else {
-                    badgeElement.innerHTML = "Pending ⏳";
-                    badgeElement.className = "badge pending";
-                }
-            } else {
-                nameElement.innerText = "Not Found";
-            }
-        });
-
-        // 3. MAP SETUP
-        let map = L.map('map').setView([20.5937, 78.9629], 5); // Default zoom level
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
+        // 2. NAYA GOOGLE MAPS LAYER (Jisme saari dukane aur galiyan dikhengi)
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20, // Bahut zyada kareeb se dekhne ke liye
+            attribution: '© Google Maps'
         }).addTo(map);
 
-        let busMarker = null;
-        let busIcon = L.divIcon({
-            html: '<div style="font-size: 35px;">🚍</div>',
-            className: 'custom-bus-icon',
-            iconSize: [35, 35],
-            iconAnchor: [17, 17] // Center me rakhne ke liye
+        // 3. Bus ka Custom Icon
+        const busIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png',
+            iconSize: [45, 45], // Icon thoda bada kiya hai
+            iconAnchor: [22, 22]
         });
+        
+        let busMarker = null;
 
-        // 4. Live Bus Location Firebase se track karna
+        // 4. Firebase se Live Location lana
         database.ref('busLocation').on('value', (snapshot) => {
-            const loc = snapshot.val();
-            if(loc && loc.lat && loc.lng) {
+            const data = snapshot.val();
+            if(data) {
+                const lat = data.lat;
+                const lng = data.lng;
+
+                // Agar marker nahi hai toh banayein, warna jagah update karein
                 if(!busMarker) {
-                    // Agar pehli baar location aayi, to map par bus banao
-                    busMarker = L.marker([loc.lat, loc.lng], {icon: busIcon}).addTo(map);
-                    map.setView([loc.lat, loc.lng], 16); // Map ko zoom karke bus par focus karo
+                    busMarker = L.marker([lat, lng], {icon: busIcon}).addTo(map);
                 } else {
-                    // Agar bas move hui hai, to icon ko naye coordinates par bhejo
-                    busMarker.setLatLng([loc.lat, loc.lng]);
-                    map.setView([loc.lat, loc.lng]); 
+                    busMarker.setLatLng([lat, lng]);
                 }
+
+                // Map ko bus ke paas le jayein (Zoom level 17 kar diya hai street view ke liye)
+                map.setView([lat, lng], 17); 
+                
+                document.getElementById('status-text').innerText = "🚌 Bus is on the way!";
+                document.getElementById('dist-text').innerText = "Live tracking active. Speed and location updating...";
             }
         });
     </script>
