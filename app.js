@@ -63,7 +63,7 @@ if (navigator.geolocation) {
             statusText.innerText = distance.toFixed(0) + " meters away";
 
             // Geofencing: 50 meters ke andar aane par button active hoga
-            if (distance <= 50) {
+            if (distance <= 100) {
                 boardBtn.disabled = false;
                 statusText.style.color = "green";
                 statusText.innerText += " (At Location)";
