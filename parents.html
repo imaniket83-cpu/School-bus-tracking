@@ -5,61 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parent App - Live Tracking</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; text-align: center; background-color: #e9ecef; }
-        .status-card { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 20px; }
-        .student-name { font-size: 28px; font-weight: bold; margin: 0 0 10px 0; color: #333; }
-        .badge { padding: 10px 20px; font-size: 20px; border-radius: 5px; font-weight: bold; display: inline-block; transition: 0.3s; }
-        .pending { background-color: #ffc107; color: #000; }
-        .boarded { background-color: #28a745; color: white; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; text-align: center; }
+        .header { background-color: #007bff; color: white; padding: 18px; font-size: 20px; font-weight: 800; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { padding: 20px; }
+        .status-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-top: 20px; border-top: 5px solid #007bff; }
+        .student-name { font-size: 28px; font-weight: bold; margin: 15px 0; color: #333; }
+        .badge { padding: 12px 25px; font-size: 18px; border-radius: 30px; font-weight: bold; display: inline-block; transition: 0.3s; }
+        .pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .boarded { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .info-text { color: #666; font-size: 14px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
-    <h2>Parent Dashboard</h2>
+    <div class="header">👪 Parent Dashboard</div>
     
-    <div class="status-card">
-        <p>Student Name:</p>
-        <div class="student-name" id="p-student-name">Loading...</div>
-        <p>Current Status:</p>
-        <div class="badge pending" id="p-status-badge">Fetching...</div>
+    <div class="container">
+        <div class="status-card">
+            <div class="info-text">Student Name</div>
+            <div class="student-name" id="p-student-name">Loading...</div>
+            <div class="info-text">Current Status</div>
+            <div class="badge pending" id="p-status-badge">Fetching...</div>
+        </div>
     </div>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // Tumhari Firebase Config 
         const firebaseConfig = {
-          apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
-          authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
-          databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com",
-          projectId: "schoolbustracking-d2f2d",
-          storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
-          messagingSenderId: "537002829038",
-          appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff"
+            apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
+            authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
+            databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com",
+            projectId: "schoolbustracking-d2f2d",
+            storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
+            messagingSenderId: "537002829038",
+            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff",
+            measurementId: "G-DQCZ4N7YVN"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const database = firebase.database();
+
+        // URL se bachhe ka ID nikalna 
+        const urlParams = new URLSearchParams(window.location.search);
+        let studentId = urlParams.get('id');
+
+        // Agar URL me ID nahi hai, to default student-01 dikhayega
+        if(!studentId) {
+            studentId = 'student-01'; 
+        }
 
         const nameElement = document.getElementById('p-student-name');
         const badgeElement = document.getElementById('p-status-badge');
 
-        // Firebase se live data read karna
-        database.ref('student/student-01').on('value', (snapshot) => {
+        // Firebase se us specific bacche ka live data read karna
+        database.ref('student/' + studentId).on('value', (snapshot) => {
             const data = snapshot.val();
             if(data) {
                 nameElement.innerText = data.name;
                 
-                // Status ke hisaab se color aur text change karna
                 if(data.status === "Boarded") {
-                    badgeElement.innerText = "Boarded ✅";
+                    badgeElement.innerHTML = "Boarded ✅";
                     badgeElement.className = "badge boarded";
                 } else {
-                    badgeElement.innerText = "Pending ⏳";
+                    badgeElement.innerHTML = "Pending ⏳";
                     badgeElement.className = "badge pending";
                 }
+            } else {
+                nameElement.innerText = "Student Not Found";
+                badgeElement.innerHTML = "Error ❌";
+                badgeElement.className = "badge pending";
             }
         });
     </script>
