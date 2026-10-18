@@ -9,7 +9,6 @@ const firebaseConfig = {
     measurementId: "G-DQCZ4N7YVN"
 };
 
-// Initialize Firebase
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -20,13 +19,12 @@ let currentLat = null;
 let currentLng = null;
 let studentsData = {};
 
-// GPS Tracking (Continuously update hogi)
+// GPS Tracking
 if (navigator.geolocation) {
     navigator.geolocation.watchPosition((position) => {
         currentLat = position.coords.latitude;
         currentLng = position.coords.longitude;
         
-        // NAYA CODE: Bus ki live location Firebase par lagataar bhejna
         database.ref('busLocation').set({
             lat: currentLat,
             lng: currentLng,
@@ -39,31 +37,41 @@ if (navigator.geolocation) {
     }, { enableHighAccuracy: true });
 }
 
-// Firebase se saare bacchon ka data ek sath lana
 database.ref('student').on('value', (snapshot) => {
     studentsData = snapshot.val() || {};
     updateUI(); 
 });
 
-// UI Banane ka function (Sabse main part)
+// NAYA SMART UI BANANE KA FUNCTION
 function updateUI() {
     if(!currentLat || Object.keys(studentsData).length === 0) return;
     
-    studentList.innerHTML = ''; // Screen clear karo
+    studentList.innerHTML = ''; 
     
-    // Har bacche ke liye card banao
+    // Step 1: Saare bacchon ka data aur distance ek array me ikattha karna
+    let sortedStudents = [];
     for (let key in studentsData) {
         let student = studentsData[key];
         let stopLat = parseFloat(student.stopLat);
         let stopLng = parseFloat(student.stopLng);
-        
         let distance = calculateDistance(currentLat, currentLng, stopLat, stopLng);
-        distance = Math.round(distance);
+        
+        sortedStudents.push({
+            id: key,
+            name: student.name,
+            status: student.status,
+            distance: Math.round(distance)
+        });
+    }
 
-        // Card UI design
+    // Step 2: Distance ke hisaab se array ko sort karna (Chote se Bada)
+    sortedStudents.sort((a, b) => a.distance - b.distance);
+
+    // Step 3: Sorted list se UI Cards banana
+    sortedStudents.forEach((student) => {
         let card = document.createElement('div');
         card.className = 'card';
-        if(distance <= 100 && student.status !== 'Boarded') card.className += ' active';
+        if(student.distance <= 100 && student.status !== 'Boarded') card.className += ' active';
 
         let statusBadge = student.status === 'Boarded' 
             ? '<span class="badge boarded">Boarded ✅</span>' 
@@ -72,8 +80,8 @@ function updateUI() {
         let btnHtml = '';
         if(student.status === 'Boarded') {
             btnHtml = `<button class="btn done" disabled>Already Boarded</button>`;
-        } else if(distance <= 100) { // Geofence Radius
-            btnHtml = `<button class="btn ready" onclick="markBoarded('${key}')">Mark Boarded</button>`;
+        } else if(student.distance <= 100) { 
+            btnHtml = `<button class="btn ready" onclick="markBoarded('${student.id}')">Mark Boarded</button>`;
         } else {
             btnHtml = `<button class="btn" disabled>Too far</button>`;
         }
@@ -83,21 +91,19 @@ function updateUI() {
                 <div class="student-name">${student.name}</div>
                 ${statusBadge}
             </div>
-            <div class="distance-text">📍 ${student.status === 'Boarded' ? 'Picked up' : distance + ' meters away'}</div>
+            <div class="distance-text">📍 ${student.status === 'Boarded' ? 'Picked up' : student.distance + ' meters away'}</div>
             ${btnHtml}
         `;
         studentList.appendChild(card);
-    }
+    });
 }
 
-// Specific bacche ko boarded mark karna
 window.markBoarded = function(studentId) {
     database.ref('student/' + studentId).update({
         status: "Boarded"
     });
 }
 
-// Haversine Distance Formula
 function calculateDistance(lat1, lon1, lat2, lon2) {
     var R = 6371e3; 
     var p1 = lat1 * Math.PI/180;
