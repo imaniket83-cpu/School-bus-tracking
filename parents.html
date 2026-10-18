@@ -119,7 +119,6 @@
         </div>
     </div>
 
-    <!-- Custom Alarm Popup Window -->
     <div id="custom-alert">
         <div class="alert-box">
             <h2>🚌 Bus is Here!</h2>
@@ -280,20 +279,24 @@
             showScreen('login-screen');
         }
 
-        // NAYA: Bus Horn aur Auto-Close (Hands-Free) Logic
         function playAlarm() {
             if(navigator.vibrate) { navigator.vibrate([1000, 500, 1000, 500, 1000]); }
 
-            // Lagaatar bajne wala aawaz (Car/Bus horn jaisa beep)
-            let hornSound = new Audio('https://actions.google.com/sounds/v1/alarms/analog_watch_alarm.ogg');
+            // Reliable MP3 format audio link for better cross-device support
+            let hornSound = new Audio('https://assets.mixkit.co/active_storage/sfx/989/989-preview.mp3');
             hornSound.loop = true;
-            hornSound.play().catch(e => console.log("Audio blocked by browser settings"));
+            
+            let playPromise = hornSound.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Audio blocked: User needs to tap the screen first", error);
+                });
+            }
 
-            // 4.5 seconds baad horn ruk jayega aur popup bhi apne aap gayab ho jayega
+            // Sirf aawaz band hogi 4.5 sec ke baad, Pop-up screen par hi rahega
             setTimeout(() => {
                 hornSound.pause();
                 hornSound.currentTime = 0;
-                document.getElementById('custom-alert').style.display = 'none'; // Auto-close popup
             }, 4500); 
         }
 
