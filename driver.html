@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Driver App - Premium Tracker</title>
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffb800">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
         .header { background-color: #ffb800; color: #222; padding: 18px; text-align: center; font-size: 20px; font-weight: 800; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
@@ -20,25 +30,18 @@
         .btn.ready { background-color: #28a745; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); cursor: pointer; }
         .btn.ready:active { transform: scale(0.98); }
         .btn.done { background-color: #6c757d; cursor: not-allowed; }
+
+        /* NAYA LOGIN SCREEN CSS */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        #login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 300px; text-align: center; }
+        #main-content { display: none; }
+        .login-btn { background-color: #28a745; width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; margin-top: 10px; }
+        .login-input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; text-align: center; font-size: 18px; letter-spacing: 2px; }
     </style>
-    <!-- PWA Setup -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#007bff">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-    </script>
 </head>
 <body>
-    <div class="header">🚍 Morning Route</div>
-    <div class="container" id="student-list">
-        <div style="text-align:center; margin-top:30px; color:#888;">Fetching student list...</div>
-    </div>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="app.js"></script>
-</body>
-</html>
+    <!-- NAYA LOGIN SCREEN -->
+    <div id="login-screen">
+        <div id="login-box">
+            <h2 style="margin-top: 0;">🚌
