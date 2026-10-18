@@ -33,15 +33,18 @@
         
         #map-screen { display: none; }
         #map { width: 100%; height: 60vh; z-index: 1; }
-        /* Info panel height badhayi taaki details fit aayein */
+        
+        /* Panel height adjusted for new features */
         .info-panel { padding: 20px; background: white; height: 40vh; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-top-left-radius: 25px; border-top-right-radius: 25px; position: relative; z-index: 1000; margin-top: -20px; text-align: center; overflow-y: auto;}
         .bus-plate { display: inline-block; background: #ffcc00; color: #000; font-weight: bold; padding: 5px 15px; border-radius: 6px; font-size: 15px; border: 2px solid #222; margin-bottom: 10px; }
         
-        /* NAYA: Driver Info Box Styling */
         .driver-box { background: #f8f9fa; border: 1px solid #ddd; padding: 8px 15px; border-radius: 8px; font-size: 14px; color: #444; margin-bottom: 10px; display: none; text-align: center; }
         .driver-box a { color: #007bff; font-weight: bold; text-decoration: none; display: inline-block; margin-left: 5px; }
         
         .status { font-size: 20px; font-weight: 900; color: #17a2b8; }
+        
+        /* NAYA: Live Distance Alert Box */
+        .distance-box { background: #e3f2fd; color: #0d47a1; font-weight: bold; padding: 8px; border-radius: 6px; font-size: 15px; margin-top: 10px; display: none; border: 1px solid #bbdefb; }
     </style>
 </head>
 <body>
@@ -100,7 +103,6 @@
             <h3 style="margin: 0 0 10px 0; color:#333;">🏫 Sandila Public School</h3>
             <div class="bus-plate" id="display-bus">BUS INFO</div>
             
-            <!-- NAYA: DRIVER BOX (Yahan driver ki detail aayegi) -->
             <div class="driver-box" id="driver-info-box">
                 👨‍✈️ Driver: <span id="driver-name-text">--</span> <br> 
                 📞 <a href="#" id="driver-phone-link">Call</a>
@@ -109,6 +111,9 @@
             <div style="border-top: 2px dashed #eee; margin: 10px 0;"></div>
             <div class="status">Tracking: <span id="display-child-name" style="color:#222;">...</span></div>
             
+            <!-- NAYA: Live Distance yahan dikhega -->
+            <div class="distance-box" id="live-distance-box">📍 Distance: <span id="dist-value">Calculating...</span></div>
+
             <div id="dist-text" style="margin-top: 10px;">Fetching status...</div>
             
             <button class="btn btn-warning" style="margin-top: 15px; padding: 8px;" onclick="window.showScreen('dashboard-screen')">🔙 Back to Dashboard</button>
@@ -136,6 +141,12 @@
         let mapInstance = null; let busMarker = null; 
         let activeBusListener = null; let activeChildListener = null;
         let childCount = 1;
+        
+        // Alarm System Variables
+        let isAlarmTriggered = false;
+        let stopLat = null;
+        let stopLng = null;
+        const ALARM_DISTANCE_METERS = 500; // Yahan se alarm ki range set kar sakte hain (500 meter)
 
         window.onload = function() {
             let savedPhone = localStorage.getItem('parentPhone');
@@ -159,8 +170,8 @@
             if(screenId !== 'map-screen') {
                 if(activeBusListener) { database.ref('busLocations/' + activeBusListener).off(); activeBusListener = null; }
                 if(activeChildListener) { database.ref('students/' + activeChildListener).off(); activeChildListener = null; }
-                // Hide driver box again
                 document.getElementById('driver-info-box').style.display = 'none';
+                document.getElementById('live-distance-box').style.display = 'none';
             }
         };
 
@@ -247,18 +258,14 @@
             let phone = document.getElementById('login-phone').value.trim();
             let pass = document.getElementById('login-pass').value.trim();
             if(!phone || !pass) { alert("Enter Phone and Password!"); return; }
-
             document.getElementById('children-list').innerHTML = "<p>Loading...</p>";
             
             database.ref('students').once('value', (snapshot) => {
                 let found = false;
                 snapshot.forEach((childSnap) => {
                     let data = childSnap.val();
-                    if(data.phone === phone && data.password === pass) {
-                        found = true;
-                    }
+                    if(data.phone === phone && data.password === pass) { found = true; }
                 });
-
                 if(found) {
                     localStorage.setItem('parentPhone', phone);
                     window.loadDashboard(phone);
@@ -277,9 +284,7 @@
                 let foundChildren = [];
                 snapshot.forEach((childSnap) => {
                     let data = childSnap.val();
-                    if(data.phone === phone) {
-                        foundChildren.push({...data, id: childSnap.key});
-                    }
+                    if(data.phone === phone) { foundChildren.push({...data, id: childSnap.key}); }
                 });
 
                 if(foundChildren.length > 0) {
@@ -305,10 +310,23 @@
             window.showScreen('login-screen');
         };
 
+        // Alarm play karne ka function
+        window.playAlarm = function() {
+            // Google ka default short beep sound
+            let alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+            alarmSound.play().catch(e => console.log("Audio permission blocked by browser"));
+            
+            // Phone vibrate bhi karega (agar supported hai)
+            if(navigator.vibrate) { navigator.vibrate([500, 200, 500]); }
+        };
+
         window.trackChild = function(childName, busId, childId) {
             document.getElementById('display-child-name').innerText = childName;
             document.getElementById('display-bus').innerText = busId.toUpperCase();
             window.showScreen('map-screen');
+            
+            isAlarmTriggered = false; // Naye bacche ko track karte waqt alarm reset
+            stopLat = null; stopLng = null;
 
             if(!mapInstance) {
                 mapInstance = L.map('map').setView([20.5937, 78.9629], 5); 
@@ -317,7 +335,25 @@
             
             const busIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png', iconSize: [45, 45], iconAnchor: [22, 22] });
             
-            // Map Location Update and Driver Data Fetch
+            // 1. Pehle bacche ka ghar ka location laayein
+            activeChildListener = childId;
+            database.ref('students/' + childId).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if(data) {
+                    stopLat = data.stopLat;
+                    stopLng = data.stopLng;
+                    
+                    if(data.status === 'boarded') {
+                        document.getElementById('dist-text').innerHTML = "<span style='color:#28a745; font-weight:bold; font-size:18px;'>✅ Boarded (Inside Bus)</span>";
+                        document.getElementById('live-distance-box').style.display = 'none'; // Board hone par distance hide kar do
+                    } else {
+                        document.getElementById('dist-text').innerHTML = "<span style='color:#ffb800; font-weight:bold; font-size:18px;'>⏳ Waiting for Bus</span>";
+                        document.getElementById('live-distance-box').style.display = 'block'; // Distance show karo
+                    }
+                }
+            });
+
+            // 2. Bus ki location track karein aur Alarm set karein
             activeBusListener = busId;
             database.ref('busLocations/' + busId).on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -329,24 +365,31 @@
                     }
                     mapInstance.setView([data.lat, data.lng], 17); 
                     
-                    // NAYA: Driver detail show karna
+                    // Driver Info Update
                     if(data.driverName && data.driverPhone) {
                         document.getElementById('driver-info-box').style.display = 'block';
                         document.getElementById('driver-name-text').innerText = data.driverName;
                         document.getElementById('driver-phone-link').innerText = data.driverPhone;
-                        document.getElementById('driver-phone-link').href = "tel:" + data.driverPhone; // Isse click karte hi call lagegi
+                        document.getElementById('driver-phone-link').href = "tel:" + data.driverPhone;
                     }
-                }
-            });
 
-            activeChildListener = childId;
-            database.ref('students/' + childId).on('value', (snapshot) => {
-                const data = snapshot.val();
-                if(data) {
-                    if(data.status === 'boarded') {
-                        document.getElementById('dist-text').innerHTML = "<span style='color:#28a745; font-weight:bold; font-size:18px;'>✅ Boarded (Inside Bus)</span> <br><span style='font-size:13px; color:#666;'>Live tracking active...</span>";
-                    } else {
-                        document.getElementById('dist-text').innerHTML = "<span style='color:#ffb800; font-weight:bold; font-size:18px;'>⏳ Waiting for Bus</span> <br><span style='font-size:13px; color:#666;'>Live tracking active...</span>";
+                    // NAYA: Distance Calculation aur Alarm System
+                    if(stopLat && stopLng) {
+                        // Leaflet map ka distance calculator
+                        let distanceInMeters = mapInstance.distance([data.lat, data.lng], [stopLat, stopLng]);
+                        
+                        let displayDist = distanceInMeters > 1000 
+                                          ? (distanceInMeters / 1000).toFixed(1) + " km" 
+                                          : Math.round(distanceInMeters) + " meters";
+                                          
+                        document.getElementById('dist-value').innerText = displayDist + " away";
+
+                        // Agar bus 500 meter ya usse kam door hai aur alarm abhi tak nahi baja
+                        if (distanceInMeters <= ALARM_DISTANCE_METERS && !isAlarmTriggered) {
+                            isAlarmTriggered = true; // Taaki baar-baar na baje
+                            window.playAlarm();
+                            alert("🔔 ALARM: School bus is very near to your location! (Within 500 meters)");
+                        }
                     }
                 }
             });
