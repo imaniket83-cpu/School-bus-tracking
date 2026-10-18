@@ -10,7 +10,6 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
         
-        /* LOGIN SCREEN CSS */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
         #login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 320px; text-align: center; }
         
@@ -18,63 +17,66 @@
         .login-btn { background-color: #28a745; width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; margin-top: 10px; transition: 0.3s; }
         .login-btn:active { transform: scale(0.98); }
         
-        /* MAIN DASHBOARD */
         #main-content { display: none; }
-        .header { background-color: #ffb800; color: #222; padding: 18px; text-align: center; font-size: 18px; font-weight: 800; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .header { background-color: #ffb800; color: #222; padding: 15px; text-align: center; font-size: 16px; font-weight: 800; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         .container { padding: 15px; padding-bottom: 40px; }
         
         .card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-left: 5px solid #ccc; transition: 0.3s; }
         .card.active { border-left-color: #28a745; }
+        .card.absent { border-left-color: #dc3545; opacity: 0.8; }
+        
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .student-name { font-size: 18px; font-weight: bold; color: #333; }
         
         .badge { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: bold; }
         .badge.pending { background: #fff3cd; color: #856404; }
         .badge.boarded { background: #d4edda; color: #155724; }
+        .badge.absent { background: #f8d7da; color: #721c24; }
         
         .distance-text { font-size: 14px; color: #666; margin-bottom: 15px; }
         .btn-board { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; background-color: #007bff; cursor: pointer; transition: 0.3s; }
         .btn-board.done { background-color: #6c757d; cursor: not-allowed; }
+        .btn-board.absent-btn { background-color: #dc3545; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <!-- 1. LOGIN SCREEN -->
     <div id="login-screen">
         <div id="login-box">
             <h2 style="margin-top: 0; color: #333;">🚌 Driver Duty</h2>
-            <p style="color:#666; font-size:14px; margin-bottom: 20px;">Enter your details for today's route</p>
+            <p style="color:#666; font-size:14px; margin-bottom: 15px;">Start your route</p>
             
-            <!-- NAYA: Driver ka Naam aur Number -->
-            <input type="text" id="driver-name" class="input-field" placeholder="Driver Name (e.g. Ramesh)">
-            <input type="number" id="driver-phone" class="input-field" placeholder="Phone Number (10 digits)">
+            <input type="text" id="driver-name" class="input-field" placeholder="Driver Name">
+            <input type="number" id="driver-phone" class="input-field" placeholder="Phone Number">
             
             <div style="border-top: 2px dashed #eee; margin: 15px 0;"></div>
 
-            <!-- Bus Selection Dropdown -->
+            <!-- NAYA: Morning/Evening Shift Option -->
+            <select id="driver-shift" class="input-field" style="background:#e3f2fd; color:#0d47a1; font-weight:bold;">
+                <option value="Morning Pickup">🌅 Morning Pickup</option>
+                <option value="Evening Drop">🌇 Evening Drop</option>
+            </select>
+
             <select id="driver-bus" class="input-field" style="font-weight: bold; color: #222;">
                 <option value="">-- Select Bus --</option>
                 <option value="bus1">Bus 1 (UP 30 AB 1111)</option>
                 <option value="bus2">Bus 2 (UP 30 XY 9999)</option>
             </select>
             
-            <input type="password" id="driver-pin" class="input-field" placeholder="Enter PIN (e.g. 1234)">
+            <input type="password" id="driver-pin" class="input-field" placeholder="Enter PIN (1234)">
             
             <button class="login-btn" onclick="window.startDuty()">Start Route & GPS</button>
             <p id="gps-status" style="font-size: 13px; color: #dc3545; display: none; margin-top: 15px;">Locating GPS...</p>
         </div>
     </div>
 
-    <!-- 2. MAIN DASHBOARD -->
     <div id="main-content">
-        <!-- NAYA: Header me driver ka naam dikhega -->
         <div class="header" id="bus-header">🚍 Route Started</div>
         <div class="container" id="student-list">
             <div style="text-align:center; margin-top:30px; color:#888;">Fetching students for this bus...</div>
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -88,64 +90,68 @@
             messagingSenderId: "537002829038",
             appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff"
         };
-
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
         
         let currentBusId = null;
         let watchId = null;
 
-        // Function 1: Login and Start Duty
         window.startDuty = function() {
             let name = document.getElementById('driver-name').value.trim();
             let phone = document.getElementById('driver-phone').value.trim();
+            let shift = document.getElementById('driver-shift').value;
             let busId = document.getElementById('driver-bus').value;
             let pin = document.getElementById('driver-pin').value;
 
-            // Validation checks
-            if(!name || !phone) { alert("Please enter Driver Name and Phone Number!"); return; }
-            if(!busId) { alert("Please select a Bus!"); return; }
-            if(pin !== "1234") { alert("Wrong PIN! Try again."); return; }
+            if(!name || !phone || !busId) { alert("Fill all details!"); return; }
+            if(pin !== "1234") { alert("Wrong PIN!"); return; }
 
             currentBusId = busId;
             document.getElementById('gps-status').style.display = 'block';
 
-            // Start GPS Tracking for Selected Bus
+            // Start GPS Tracking
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(
                     (position) => {
-                        // GPS Lock ho gaya, ab dashboard dikhao
                         document.getElementById('login-screen').style.display = "none";
                         document.getElementById('main-content').style.display = "block";
                         
                         let busLabel = busId === 'bus1' ? 'Bus 1' : 'Bus 2';
-                        // Dashboard ke header par bus ka naam aur driver ka naam laga diya
-                        document.getElementById('bus-header').innerText = `🚍 ${busLabel} | Driver: ${name}`;
+                        document.getElementById('bus-header').innerHTML = `${shift}<br>🚍 ${busLabel} | Driver: ${name}`;
 
-                        // Firebase me is Bus ki live location KE SATH driver ka data bhi save karo
                         database.ref('busLocations/' + currentBusId).set({
                             lat: position.coords.latitude,
                             lng: position.coords.longitude,
                             timestamp: Date.now(),
                             driverName: name,
-                            driverPhone: phone
+                            driverPhone: phone,
+                            shift: shift
                         });
                     }, 
-                    (error) => {
-                        alert("GPS Error: Please turn on Location/GPS on your phone!");
-                        document.getElementById('gps-status').style.display = 'none';
-                    }, 
+                    (error) => { alert("Turn on GPS/Location!"); document.getElementById('gps-status').style.display = 'none'; }, 
                     { enableHighAccuracy: true }
                 );
 
-                // Sirf is specific bus ke baccho ko list me fetch karo
+                // NAYA: Duty start hote hi, is bus ke baccho ka status reset karna (taki kal ka boarded hat jaye)
+                database.ref('students').once('value', snapshot => {
+                    let updates = {};
+                    snapshot.forEach(childSnap => {
+                        let data = childSnap.val();
+                        if(data.busId === currentBusId && data.status !== 'absent') {
+                            updates[childSnap.key + '/status'] = 'pending';
+                        }
+                    });
+                    if(Object.keys(updates).length > 0) {
+                        database.ref('students').update(updates);
+                    }
+                });
+
                 window.loadStudentsForBus(currentBusId);
             } else {
-                alert("Your browser does not support GPS tracking.");
+                alert("GPS tracking not supported.");
             }
         };
 
-        // Function 2: Load Students specific to the selected Bus
         window.loadStudentsForBus = function(busId) {
             database.ref('students').on('value', (snapshot) => {
                 const listDiv = document.getElementById('student-list');
@@ -158,16 +164,28 @@
                     
                     if(student.busId === busId) {
                         count++;
-                        let isBoarded = student.status === "boarded";
-                        let badgeClass = isBoarded ? "badge boarded" : "badge pending";
-                        let badgeText = isBoarded ? "Boarded" : "Waiting";
                         
-                        let btnHtml = isBoarded 
-                            ? `<button class="btn-board done" disabled>Already Boarded</button>`
-                            : `<button class="btn-board" onclick="window.markBoarded('${studentId}')">Mark as Boarded</button>`;
+                        let isAbsent = student.status === "absent";
+                        let isBoarded = student.status === "boarded";
+                        
+                        let badgeClass = "badge pending";
+                        let badgeText = "Waiting";
+                        let cardClass = "card active";
+                        
+                        let btnHtml = `<button class="btn-board" onclick="window.markBoarded('${studentId}')">Mark as Boarded</button>`;
+
+                        if (isAbsent) {
+                            badgeClass = "badge absent"; badgeText = "Absent Today";
+                            cardClass = "card absent";
+                            btnHtml = `<button class="btn-board absent-btn" disabled>Student on Leave</button>`;
+                        } else if (isBoarded) {
+                            badgeClass = "badge boarded"; badgeText = "Boarded";
+                            cardClass = "card";
+                            btnHtml = `<button class="btn-board done" disabled>Already Boarded</button>`;
+                        }
 
                         listDiv.innerHTML += `
-                            <div class="card ${isBoarded ? '' : 'active'}">
+                            <div class="${cardClass}">
                                 <div class="card-header">
                                     <div class="student-name">${student.name}</div>
                                     <div class="${badgeClass}">${badgeText}</div>
@@ -178,14 +196,10 @@
                         `;
                     }
                 });
-
-                if(count === 0) {
-                    listDiv.innerHTML = `<div style="text-align:center; color:#888;">No students assigned to this bus yet.</div>`;
-                }
+                if(count === 0) listDiv.innerHTML = `<div style="text-align:center; color:#888;">No students assigned.</div>`;
             });
         };
 
-        // Function 3: Mark Student as Boarded
         window.markBoarded = function(studentId) {
             database.ref('students/' + studentId + '/status').set('boarded');
         };
