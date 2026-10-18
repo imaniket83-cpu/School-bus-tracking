@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver App - Track & Board</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; text-align: center; background-color: #f4f7f6; }
+        .student-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 20px; }
+        .student-name { font-size: 24px; margin: 0 0 10px 0; }
+        .status-text { color: #666; margin-bottom: 20px; }
+        button { padding: 12px 24px; font-size: 18px; border-radius: 8px; border: none; color: white; width: 100%; transition: 0.3s; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        button:enabled { background-color: #28a745; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Route: Morning Pickup</h2>
+    
+    <div class="student-card">
+        <h3 class="student-name" id="student-name">Loading...</h3>
+        <p class="status-text" id="distance-status">Fetching location & data...</p>
+        <button id="board-btn" disabled onclick="markBoarded()">Boarded</button>
+    </div>
+
+    <!-- Firebase SDK (Version 8 - Easiest for CDN setup) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Hamari custom logic file -->
+    <script src="app.js"></script>
+</body>
+</html>

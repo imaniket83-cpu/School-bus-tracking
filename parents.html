@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent App - Live Tracking</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; text-align: center; background-color: #e9ecef; }
+        .status-card { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 20px; }
+        .student-name { font-size: 28px; font-weight: bold; margin: 0 0 10px 0; color: #333; }
+        .badge { padding: 10px 20px; font-size: 20px; border-radius: 5px; font-weight: bold; display: inline-block; transition: 0.3s; }
+        .pending { background-color: #ffc107; color: #000; }
+        .boarded { background-color: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h2>Parent Dashboard</h2>
+    
+    <div class="status-card">
+        <p>Student Name:</p>
+        <div class="student-name" id="p-student-name">Loading...</div>
+        <p>Current Status:</p>
+        <div class="badge pending" id="p-status-badge">Fetching...</div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // Tumhari Firebase Config 
+        const firebaseConfig = {
+          apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
+          authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
+          databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com",
+          projectId: "schoolbustracking-d2f2d",
+          storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
+          messagingSenderId: "537002829038",
+          appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const nameElement = document.getElementById('p-student-name');
+        const badgeElement = document.getElementById('p-status-badge');
+
+        // Firebase se live data read karna
+        database.ref('student/student-01').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                nameElement.innerText = data.name;
+                
+                // Status ke hisaab se color aur text change karna
+                if(data.status === "Boarded") {
+                    badgeElement.innerText = "Boarded ✅";
+                    badgeElement.className = "badge boarded";
+                } else {
+                    badgeElement.innerText = "Pending ⏳";
+                    badgeElement.className = "badge pending";
+                }
+            }
+        });
+    </script>
+</body>
+</html>
