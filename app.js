@@ -25,6 +25,14 @@ if (navigator.geolocation) {
     navigator.geolocation.watchPosition((position) => {
         currentLat = position.coords.latitude;
         currentLng = position.coords.longitude;
+        
+        // NAYA CODE: Bus ki live location Firebase par lagataar bhejna
+        database.ref('busLocation').set({
+            lat: currentLat,
+            lng: currentLng,
+            timestamp: Date.now()
+        });
+
         updateUI(); 
     }, (error) => {
         console.error("GPS Error", error);
