@@ -1,12 +1,12 @@
-// YAHAN APNI FIREBASE CONFIG DAALEIN JO PEHLE THI
 const firebaseConfig = {
-    apiKey: "AIzaSy...",
-    authDomain: "...",
-    databaseURL: "...",
-    projectId: "...",
-    storageBucket: "...",
-    messagingSenderId: "...",
-    appId: "..."
+    apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
+    authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
+    databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com",
+    projectId: "schoolbustracking-d2f2d",
+    storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
+    messagingSenderId: "537002829038",
+    appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff",
+    measurementId: "G-DQCZ4N7YVN"
 };
 
 // Initialize Firebase
