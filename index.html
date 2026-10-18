@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Bus Tracker</title>
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; text-align: center; }
+        .header { background-color: #007bff; color: white; padding: 25px 15px; font-size: 24px; font-weight: 800; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { padding: 30px 20px; display: flex; flex-direction: column; gap: 20px; max-width: 400px; margin: auto; }
+        .btn { padding: 18px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; color: white; cursor: pointer; text-decoration: none; display: block; transition: 0.3s; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn-driver { background-color: #28a745; }
+        .btn-parent { background-color: #17a2b8; }
+        .btn-admin { background-color: #343a40; }
+        .icon { font-size: 30px; margin-bottom: 5px; display: block; }
+    </style>
+</head>
+<body>
+    <div class="header">🚍 School Bus Tracker</div>
+    
+    <div class="container">
+        <h3>Welcome! Please select your portal:</h3>
+        
+        <a href="driver.html" class="btn btn-driver">
+            <span class="icon">🚌</span>
+            Driver Login
+        </a>
+        
+        <a href="parent.html?id=student-01" class="btn btn-parent">
+            <span class="icon">👪</span>
+            Parent Portal
+        </a>
+        
+        <a href="admin.html" class="btn btn-admin">
+            <span class="icon">⚙️</span>
+            Admin Dashboard
+        </a>
+    </div>
+</body>
+</html>
