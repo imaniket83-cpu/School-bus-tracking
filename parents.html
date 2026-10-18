@@ -42,7 +42,6 @@
         .status { font-size: 20px; font-weight: 900; color: #17a2b8; }
         .distance-box { background: #e3f2fd; color: #0d47a1; font-weight: bold; padding: 8px; border-radius: 6px; font-size: 15px; margin-top: 10px; display: none; border: 1px solid #bbdefb; }
 
-        /* Custom Alarm Popup Window */
         #custom-alert { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
         .alert-box { background: white; padding: 30px; border-radius: 15px; text-align: center; width: 100%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: popIn 0.3s ease-out; border-top: 8px solid #dc3545;}
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -58,8 +57,8 @@
             <h2>👪 Parent Login</h2>
             <input type="number" id="login-phone" class="input-field" placeholder="Mobile Number">
             <input type="password" id="login-pass" class="input-field" placeholder="Password">
-            <button class="btn btn-primary" onclick="window.loginParent()">Login</button>
-            <span class="link-text" onclick="window.showScreen('register-screen')">New Parent? Register Here</span>
+            <button class="btn btn-primary" onclick="loginParent()">Login</button>
+            <span class="link-text" onclick="showScreen('register-screen')">New Parent? Register Here</span>
         </div>
     </div>
 
@@ -85,18 +84,18 @@
                 </div>
             </div>
 
-            <button class="btn btn-add-more" onclick="window.addAnotherChild()">➕ Add Another Child</button>
-            <button class="btn btn-secondary" onclick="window.getLocation()" id="loc-btn">📍 Save Home Location</button>
+            <button class="btn btn-add-more" onclick="addAnotherChild()">➕ Add Another Child</button>
+            <button class="btn btn-secondary" onclick="getLocation()" id="loc-btn">📍 Save Home Location</button>
             <p id="loc-status" style="font-size: 12px; color: #28a745; display: none; font-weight:bold;">Location Saved ✅</p>
-            <button class="btn btn-primary" onclick="window.registerParent()">Submit All Details</button>
-            <span class="link-text" onclick="window.showScreen('login-screen')">Back to Login</span>
+            <button class="btn btn-primary" onclick="registerParent()">Submit All Details</button>
+            <span class="link-text" onclick="showScreen('login-screen')">Back to Login</span>
         </div>
     </div>
 
     <div id="dashboard-screen">
         <h2 style="color: #333; text-align:center;">My Children</h2>
         <div id="children-list"></div>
-        <button class="btn" style="background:#dc3545; margin-top:20px;" onclick="window.logoutParent()">Logout</button>
+        <button class="btn" style="background:#dc3545; margin-top:20px;" onclick="logoutParent()">Logout</button>
     </div>
 
     <div id="map-screen">
@@ -116,11 +115,10 @@
             <div class="distance-box" id="live-distance-box">📍 Distance: <span id="dist-value">Calculating...</span></div>
             <div id="dist-text" style="margin-top: 10px;">Fetching status...</div>
             
-            <button class="btn btn-warning" style="margin-top: 15px; padding: 8px;" onclick="window.showScreen('dashboard-screen')">🔙 Back to Dashboard</button>
+            <button class="btn btn-warning" style="margin-top: 15px; padding: 8px;" onclick="showScreen('dashboard-screen')">🔙 Back to Dashboard</button>
         </div>
     </div>
 
-    <!-- Custom Alarm Popup Window -->
     <div id="custom-alert">
         <div class="alert-box">
             <h2>🔔 Bus is Arriving!</h2>
@@ -157,10 +155,10 @@
 
         window.onload = function() {
             let savedPhone = localStorage.getItem('parentPhone');
-            if(savedPhone) { window.loadDashboard(savedPhone); }
+            if(savedPhone) { loadDashboard(savedPhone); }
         };
 
-        window.showScreen = function(screenId) {
+        function showScreen(screenId) {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('register-screen').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'none';
@@ -178,18 +176,18 @@
                 document.getElementById('driver-info-box').style.display = 'none';
                 document.getElementById('live-distance-box').style.display = 'none';
             }
-        };
+        }
 
-        window.addAnotherChild = function() {
+        function addAnotherChild() {
             childCount++;
             const container = document.getElementById('children-container');
             const newDiv = document.createElement('div');
             newDiv.className = 'child-entry';
             newDiv.innerHTML = `<h4>Child ${childCount}</h4><input type="text" class="input-field child-name" placeholder="Child's Full Name"><select class="input-field child-bus"><option value="">-- Select Bus --</option><option value="bus1">Bus 1 (UP 30 AB 1111)</option><option value="bus2">Bus 2 (UP 30 XY 9999)</option></select>`;
             container.appendChild(newDiv);
-        };
+        }
 
-        window.getLocation = function() {
+        function getLocation() {
             const locBtn = document.getElementById('loc-btn');
             locBtn.innerText = "Fetching...";
             if (navigator.geolocation) {
@@ -198,9 +196,9 @@
                     locBtn.style.display = 'none'; document.getElementById('loc-status').style.display = 'block';
                 }, () => { alert("Please allow location!"); locBtn.innerText = "📍 Save Home Location"; }, { enableHighAccuracy: true });
             }
-        };
+        }
 
-        window.registerParent = function() {
+        function registerParent() {
             let phone = document.getElementById('reg-phone').value.trim();
             let pass = document.getElementById('reg-pass').value.trim();
             if(!phone || !pass) { alert("Enter Parent Mobile and Password!"); return; }
@@ -223,15 +221,15 @@
 
             Promise.all(promises).then(() => {
                 alert("Registration Successful! Please Login.");
-                window.showScreen('login-screen');
+                showScreen('login-screen');
                 document.getElementById('login-phone').value = phone;
                 document.getElementById('reg-phone').value = ''; document.getElementById('reg-pass').value = '';
                 document.getElementById('loc-status').style.display = 'none'; document.getElementById('loc-btn').style.display = 'block';
                 tempLat = null; tempLng = null;
             });
-        };
+        }
 
-        window.loginParent = function() {
+        function loginParent() {
             let phone = document.getElementById('login-phone').value.trim();
             let pass = document.getElementById('login-pass').value.trim();
             if(!phone || !pass) { alert("Enter Phone and Password!"); return; }
@@ -245,17 +243,17 @@
                 });
                 if(found) {
                     localStorage.setItem('parentPhone', phone);
-                    window.loadDashboard(phone);
+                    loadDashboard(phone);
                 } else {
                     alert("No account found or Wrong Password!");
                     document.getElementById('children-list').innerHTML = "";
                 }
             });
-        };
+        }
 
-        window.loadDashboard = function(phone) {
+        function loadDashboard(phone) {
             document.getElementById('children-list').innerHTML = "<p>Loading...</p>";
-            window.showScreen('dashboard-screen');
+            showScreen('dashboard-screen');
             
             database.ref('students').once('value', (snapshot) => {
                 let foundChildren = [];
@@ -268,41 +266,35 @@
                     let html = "";
                     foundChildren.forEach(kid => {
                         let busName = kid.busId === 'bus1' ? 'Bus 1 (UP 30 AB 1111)' : 'Bus 2 (UP 30 XY 9999)';
-                        html += `<div class="child-card"><div class="child-name">👦 ${kid.name}</div><div class="child-bus">🚌 Assigned to: ${busName}</div><button class="btn btn-primary" onclick="window.trackChild('${kid.name}', '${kid.busId}', '${kid.id}')">📍 Track ${kid.name}'s Bus</button></div>`;
+                        html += `<div class="child-card"><div class="child-name">👦 ${kid.name}</div><div class="child-bus">🚌 Assigned to: ${busName}</div><button class="btn btn-primary" onclick="trackChild('${kid.name}', '${kid.busId}', '${kid.id}')">📍 Track ${kid.name}'s Bus</button></div>`;
                     });
                     document.getElementById('children-list').innerHTML = html;
                 }
             });
-        };
+        }
 
-        window.logoutParent = function() {
+        function logoutParent() {
             localStorage.removeItem('parentPhone');
             document.getElementById('login-phone').value = ''; document.getElementById('login-pass').value = '';
-            window.showScreen('login-screen');
-        };
+            showScreen('login-screen');
+        }
 
-        // NAYA: Proper Alarm Sound jo 3 baar bajega 
-        window.playAlarm = function() {
+        function playAlarm() {
             let beeps = 0;
-            // Phone vibrate loudly (1 sec vibrate, half sec pause)
             if(navigator.vibrate) { navigator.vibrate([1000, 500, 1000, 500, 1000]); }
 
-            // Digital Alarm Clock sound (Google's official sound library)
             let beepInterval = setInterval(() => {
                 let alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
                 alarmSound.play().catch(e => console.log("Audio blocked by browser settings"));
                 beeps++;
-                
-                if(beeps >= 3) {
-                    clearInterval(beepInterval);
-                }
-            }, 2500); // 2.5 seconds ka gap kyunki alarm thoda lamba hai
-        };
+                if(beeps >= 3) { clearInterval(beepInterval); }
+            }, 2500); 
+        }
 
-        window.trackChild = function(childName, busId, childId) {
+        function trackChild(childName, busId, childId) {
             document.getElementById('display-child-name').innerText = childName;
             document.getElementById('display-bus').innerText = busId.toUpperCase();
-            window.showScreen('map-screen');
+            showScreen('map-screen');
             
             isAlarmTriggered = false; stopLat = null; stopLng = null;
 
@@ -311,7 +303,6 @@
                 L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(mapInstance);
             }
             
-            // NAYA: Asli School Bus ka icon
             const busIcon = L.icon({ 
                 iconUrl: 'https://img.icons8.com/color/96/school-bus.png', 
                 iconSize: [45, 45], 
@@ -350,3 +341,24 @@
                         document.getElementById('driver-phone-link').innerText = data.driverPhone;
                         document.getElementById('driver-phone-link').href = "tel:" + data.driverPhone;
                     }
+
+                    if(stopLat && stopLng) {
+                        let distanceInMeters = mapInstance.distance([data.lat, data.lng], [stopLat, stopLng]);
+                        let displayDist = distanceInMeters > 1000 
+                                          ? (distanceInMeters / 1000).toFixed(1) + " km" 
+                                          : Math.round(distanceInMeters) + " meters";
+                                          
+                        document.getElementById('dist-value').innerText = displayDist + " away";
+
+                        if (distanceInMeters <= ALARM_DISTANCE_METERS && !isAlarmTriggered) {
+                            isAlarmTriggered = true; 
+                            playAlarm(); 
+                            document.getElementById('custom-alert').style.display = 'flex'; 
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
