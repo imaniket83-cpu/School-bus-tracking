@@ -14,13 +14,21 @@
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6;}
         
-        /* Map aur Panel ka design */
-        #map { width: 100%; height: 75vh; z-index: 1; }
+        /* Map ki height thodi kam ki hai taaki details fit aa sakein */
+        #map { width: 100%; height: 65vh; z-index: 1; }
         
-        .info-panel { padding: 25px 20px; background: white; height: 25vh; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-top-left-radius: 25px; border-top-right-radius: 25px; position: relative; z-index: 1000; margin-top: -20px; text-align: center; }
-        .status { font-size: 22px; font-weight: 900; margin-bottom: 8px; color: #333; }
-        .details { color: #666; font-size: 15px; font-weight: 500; }
+        /* Panel ki height badha di hai */
+        .info-panel { padding: 20px 20px; background: white; height: 35vh; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-top-left-radius: 25px; border-top-right-radius: 25px; position: relative; z-index: 1000; margin-top: -20px; text-align: center; }
+        
         .header-bar { width: 50px; height: 5px; background: #ddd; border-radius: 5px; margin: 0 auto 15px auto; }
+        
+        /* School aur Bus Number ki Nayi Styling */
+        .school-title { font-size: 20px; font-weight: 900; color: #222; margin-bottom: 5px; }
+        .bus-plate { display: inline-block; background: #ffcc00; color: #000; font-weight: bold; padding: 5px 15px; border-radius: 6px; font-size: 15px; border: 2px solid #222; margin-bottom: 12px; letter-spacing: 1.5px; box-shadow: 2px 2px 0px #222; }
+        .divider { border-top: 2px dashed #eee; margin: 10px 0 15px 0; }
+        
+        .status { font-size: 20px; font-weight: 900; margin-bottom: 5px; color: #17a2b8; }
+        .details { color: #666; font-size: 14px; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -28,9 +36,18 @@
     <!-- Map Yahan Dikhega -->
     <div id="map"></div>
     
-    <!-- Neeche ka Info Panel -->
+    <!-- Naya Info Panel Jisme School aur Bus Details hain -->
     <div class="info-panel">
         <div class="header-bar"></div>
+        
+        <!-- YAHAN SCHOOL KA NAAM CHANGE KAREIN -->
+        <div class="school-title">🏫 Sandila Public School</div>
+        
+        <!-- YAHAN BUS KA NUMBER CHANGE KAREIN -->
+        <div class="bus-plate">UP 30 AB 1234</div>
+        
+        <div class="divider"></div>
+        
         <div class="status" id="status-text">🚌 Tracking Bus...</div>
         <div class="details" id="dist-text">Waiting for driver to start route...</div>
     </div>
@@ -41,7 +58,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
             authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
@@ -55,39 +71,33 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
 
-        // 1. Map Initialize karein
         const map = L.map('map').setView([20.5937, 78.9629], 5); 
 
-        // 2. NAYA GOOGLE MAPS LAYER (Jisme saari dukane aur galiyan dikhengi)
         L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-            maxZoom: 20, // Bahut zyada kareeb se dekhne ke liye
+            maxZoom: 20,
             attribution: '© Google Maps'
         }).addTo(map);
 
-        // 3. Bus ka Custom Icon
         const busIcon = L.icon({
             iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png',
-            iconSize: [45, 45], // Icon thoda bada kiya hai
+            iconSize: [45, 45],
             iconAnchor: [22, 22]
         });
         
         let busMarker = null;
 
-        // 4. Firebase se Live Location lana
         database.ref('busLocation').on('value', (snapshot) => {
             const data = snapshot.val();
             if(data) {
                 const lat = data.lat;
                 const lng = data.lng;
 
-                // Agar marker nahi hai toh banayein, warna jagah update karein
                 if(!busMarker) {
                     busMarker = L.marker([lat, lng], {icon: busIcon}).addTo(map);
                 } else {
                     busMarker.setLatLng([lat, lng]);
                 }
 
-                // Map ko bus ke paas le jayein (Zoom level 17 kar diya hai street view ke liye)
                 map.setView([lat, lng], 17); 
                 
                 document.getElementById('status-text').innerText = "🚌 Bus is on the way!";
