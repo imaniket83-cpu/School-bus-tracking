@@ -22,6 +22,14 @@
         #map { height: 400px; width: 100%; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 1; }
         .custom-bus-icon { background: none; border: none; }
     </style>
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
 </head>
 <body>
     <div class="header">👪 Parent Dashboard</div>
