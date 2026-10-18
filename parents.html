@@ -42,7 +42,7 @@
         .status { font-size: 20px; font-weight: 900; color: #17a2b8; }
         .distance-box { background: #e3f2fd; color: #0d47a1; font-weight: bold; padding: 8px; border-radius: 6px; font-size: 15px; margin-top: 10px; display: none; border: 1px solid #bbdefb; }
 
-        /* NAYA: Custom Alarm Notification UI */
+        /* Custom Alarm Popup Window */
         #custom-alert { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
         .alert-box { background: white; padding: 30px; border-radius: 15px; text-align: center; width: 100%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: popIn 0.3s ease-out; border-top: 8px solid #dc3545;}
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -53,7 +53,6 @@
 </head>
 <body>
 
-    <!-- Login/Register/Dashboard Screens... -->
     <div id="login-screen" class="auth-container">
         <div class="auth-box">
             <h2>👪 Parent Login</h2>
@@ -67,9 +66,13 @@
     <div id="register-screen" class="auth-container" style="display: none;">
         <div class="auth-box">
             <h2>📝 Registration</h2>
+            <p style="font-size: 12px; color: #666; margin-top:0; margin-bottom: 15px;">Parent details and all children in one place</p>
+            
             <input type="number" id="reg-phone" class="input-field" placeholder="Parent Mobile Number">
             <input type="password" id="reg-pass" class="input-field" placeholder="Create Password">
+            
             <div style="border-top: 2px solid #eee; margin: 15px 0;"></div>
+
             <div id="children-container">
                 <div class="child-entry">
                     <h4>Child 1</h4>
@@ -81,6 +84,7 @@
                     </select>
                 </div>
             </div>
+
             <button class="btn btn-add-more" onclick="window.addAnotherChild()">➕ Add Another Child</button>
             <button class="btn btn-secondary" onclick="window.getLocation()" id="loc-btn">📍 Save Home Location</button>
             <p id="loc-status" style="font-size: 12px; color: #28a745; display: none; font-weight:bold;">Location Saved ✅</p>
@@ -116,7 +120,7 @@
         </div>
     </div>
 
-    <!-- NAYA: Custom Alarm Popup Window (Alert ki jagah) -->
+    <!-- Custom Alarm Popup Window -->
     <div id="custom-alert">
         <div class="alert-box">
             <h2>🔔 Bus is Arriving!</h2>
@@ -277,23 +281,22 @@
             window.showScreen('login-screen');
         };
 
-        // NAYA: Audio 3 baar loop hone wala function
+        // NAYA: Proper Alarm Sound jo 3 baar bajega 
         window.playAlarm = function() {
             let beeps = 0;
-            // Phone vibrate (Pattern: Vibrate, Pause, Vibrate, Pause, Vibrate)
-            if(navigator.vibrate) { navigator.vibrate([600, 400, 600, 400, 600]); }
+            // Phone vibrate loudly (1 sec vibrate, half sec pause)
+            if(navigator.vibrate) { navigator.vibrate([1000, 500, 1000, 500, 1000]); }
 
-            // Interval setup to play sound 3 times with 1 second gap
+            // Digital Alarm Clock sound (Google's official sound library)
             let beepInterval = setInterval(() => {
-                let alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-                alarmSound.play().catch(e => console.log("Audio blocked: Parent needs to click screen first"));
+                let alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
+                alarmSound.play().catch(e => console.log("Audio blocked by browser settings"));
                 beeps++;
                 
-                // 3 baar bajne ke baad interval band kar do
                 if(beeps >= 3) {
                     clearInterval(beepInterval);
                 }
-            }, 1000); 
+            }, 2500); // 2.5 seconds ka gap kyunki alarm thoda lamba hai
         };
 
         window.trackChild = function(childName, busId, childId) {
@@ -308,7 +311,12 @@
                 L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(mapInstance);
             }
             
-            const busIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png', iconSize: [45, 45], iconAnchor: [22, 22] });
+            // NAYA: Asli School Bus ka icon
+            const busIcon = L.icon({ 
+                iconUrl: 'https://img.icons8.com/color/96/school-bus.png', 
+                iconSize: [45, 45], 
+                iconAnchor: [22, 22] 
+            });
             
             activeChildListener = childId;
             database.ref('students/' + childId).on('value', (snapshot) => {
@@ -342,25 +350,3 @@
                         document.getElementById('driver-phone-link').innerText = data.driverPhone;
                         document.getElementById('driver-phone-link').href = "tel:" + data.driverPhone;
                     }
-
-                    if(stopLat && stopLng) {
-                        let distanceInMeters = mapInstance.distance([data.lat, data.lng], [stopLat, stopLng]);
-                        let displayDist = distanceInMeters > 1000 
-                                          ? (distanceInMeters / 1000).toFixed(1) + " km" 
-                                          : Math.round(distanceInMeters) + " meters";
-                                          
-                        document.getElementById('dist-value').innerText = displayDist + " away";
-
-                        // NAYA: Agar bus paas aati hai, toh Custom Popup dikhega aur Sound bajega
-                        if (distanceInMeters <= ALARM_DISTANCE_METERS && !isAlarmTriggered) {
-                            isAlarmTriggered = true; 
-                            window.playAlarm(); // 3 beep sound
-                            document.getElementById('custom-alert').style.display = 'flex'; // UI popup
-                        }
-                    }
-                }
-            });
-        };
-    </script>
-</body>
-</html>
