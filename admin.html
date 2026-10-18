@@ -40,6 +40,17 @@
             <button class="btn btn-add" onclick="checkPin()">Login</button>
         </div>
     </div>
+    <script>
+    window.checkPin = function() {
+        let pin = document.getElementById('admin-pin').value;
+        if(pin === "9999") { 
+            document.getElementById('login-screen').style.display = "none";
+            document.getElementById('main-content').style.display = "block";
+        } else {
+            alert("Wrong PIN! Try again.");
+        }
+    }
+</script>
 
     <!-- PURANA ADMIN DASHBOARD YAHAN SE SHURU HOTA HAI -->
     <div id="main-content">
