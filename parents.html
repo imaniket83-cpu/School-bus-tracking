@@ -95,7 +95,10 @@
             <div class="bus-plate" id="display-bus">BUS INFO</div>
             <div style="border-top: 2px dashed #eee; margin: 10px 0;"></div>
             <div class="status">Tracking: <span id="display-child-name" style="color:#222;">...</span></div>
-            <div style="color: #666; font-size: 14px; margin-top:5px;" id="dist-text">Fetching live location...</div>
+            
+            <!-- YAHAN STATUS UPDATE HOGA -->
+            <div id="dist-text" style="margin-top: 10px;">Fetching status...</div>
+            
             <button class="btn btn-warning" style="margin-top: 15px; padding: 8px;" onclick="window.showScreen('dashboard-screen')">🔙 Back to Dashboard</button>
         </div>
     </div>
@@ -118,7 +121,8 @@
         const database = firebase.database();
 
         let tempLat = null; let tempLng = null;
-        let mapInstance = null; let busMarker = null; let activeBusListener = null;
+        let mapInstance = null; let busMarker = null; 
+        let activeBusListener = null; let activeChildListener = null;
         let childCount = 1;
 
         window.onload = function() {
@@ -140,9 +144,10 @@
                 document.getElementById(screenId).style.display = 'block';
             }
             
-            if(screenId !== 'map-screen' && activeBusListener) {
-                database.ref('busLocations/' + activeBusListener).off();
-                activeBusListener = null;
+            // Jab map se wapas jayein toh listeners band kar dein
+            if(screenId !== 'map-screen') {
+                if(activeBusListener) { database.ref('busLocations/' + activeBusListener).off(); activeBusListener = null; }
+                if(activeChildListener) { database.ref('students/' + activeChildListener).off(); activeChildListener = null; }
             }
         };
 
@@ -268,11 +273,12 @@
                     let html = "";
                     foundChildren.forEach(kid => {
                         let busName = kid.busId === 'bus1' ? 'Bus 1 (UP 30 AB 1111)' : 'Bus 2 (UP 30 XY 9999)';
+                        // NAYA: ID bhi pass ki hai trackChild mein
                         html += `
                         <div class="child-card">
                             <div class="child-name">👦 ${kid.name}</div>
                             <div class="child-bus">🚌 Assigned to: ${busName}</div>
-                            <button class="btn btn-primary" onclick="window.trackChild('${kid.name}', '${kid.busId}')">📍 Track ${kid.name}'s Bus</button>
+                            <button class="btn btn-primary" onclick="window.trackChild('${kid.name}', '${kid.busId}', '${kid.id}')">📍 Track ${kid.name}'s Bus</button>
                         </div>`;
                     });
                     document.getElementById('children-list').innerHTML = html;
@@ -287,7 +293,7 @@
             window.showScreen('login-screen');
         };
 
-        window.trackChild = function(childName, busId) {
+        window.trackChild = function(childName, busId, childId) {
             document.getElementById('display-child-name').innerText = childName;
             document.getElementById('display-bus').innerText = busId.toUpperCase();
             window.showScreen('map-screen');
@@ -299,6 +305,7 @@
             
             const busIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png', iconSize: [45, 45], iconAnchor: [22, 22] });
             
+            // Map Location Update
             activeBusListener = busId;
             database.ref('busLocations/' + busId).on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -309,9 +316,19 @@
                         busMarker.setLatLng([data.lat, data.lng]);
                     }
                     mapInstance.setView([data.lat, data.lng], 17); 
-                    document.getElementById('dist-text').innerText = "Live tracking active...";
-                } else {
-                    document.getElementById('dist-text').innerText = "Bus has not started the trip yet.";
+                }
+            });
+
+            // NAYA: Bacche ka Boarded/Waiting status update karega
+            activeChildListener = childId;
+            database.ref('students/' + childId).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if(data) {
+                    if(data.status === 'boarded') {
+                        document.getElementById('dist-text').innerHTML = "<span style='color:#28a745; font-weight:bold; font-size:18px;'>✅ Boarded (Inside Bus)</span> <br><span style='font-size:13px; color:#666;'>Live tracking active...</span>";
+                    } else {
+                        document.getElementById('dist-text').innerHTML = "<span style='color:#ffb800; font-weight:bold; font-size:18px;'>⏳ Waiting for Bus</span> <br><span style='font-size:13px; color:#666;'>Live tracking active...</span>";
+                    }
                 }
             });
         };
