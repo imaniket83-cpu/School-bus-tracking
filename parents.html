@@ -3,53 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parent Portal - Bus Tracker</title>
+    <title>Parent App - Bus Tracker</title>
     <!-- PWA Setup -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#17a2b8">
-    
     <!-- Leaflet CSS for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6;}
         
-        /* Map ki height thodi kam ki hai taaki details fit aa sakein */
+        /* AUTH SCREENS (Login & Register) */
+        .auth-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; padding: 20px; box-sizing: border-box; }
+        .auth-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
+        .auth-box h2 { margin-top: 0; color: #17a2b8; }
+        .input-field { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn-primary { background-color: #17a2b8; }
+        .btn-secondary { background-color: #28a745; margin-bottom: 10px; }
+        .link-text { color: #007bff; cursor: pointer; margin-top: 15px; display: block; font-size: 14px; font-weight: bold; }
+        
+        /* MAP SCREEN */
+        #map-screen { display: none; }
         #map { width: 100%; height: 65vh; z-index: 1; }
-        
-        /* Panel ki height badha di hai */
         .info-panel { padding: 20px 20px; background: white; height: 35vh; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-top-left-radius: 25px; border-top-right-radius: 25px; position: relative; z-index: 1000; margin-top: -20px; text-align: center; }
-        
         .header-bar { width: 50px; height: 5px; background: #ddd; border-radius: 5px; margin: 0 auto 15px auto; }
-        
-        /* School aur Bus Number ki Nayi Styling */
         .school-title { font-size: 20px; font-weight: 900; color: #222; margin-bottom: 5px; }
-        .bus-plate { display: inline-block; background: #ffcc00; color: #000; font-weight: bold; padding: 5px 15px; border-radius: 6px; font-size: 15px; border: 2px solid #222; margin-bottom: 12px; letter-spacing: 1.5px; box-shadow: 2px 2px 0px #222; }
+        .bus-plate { display: inline-block; background: #ffcc00; color: #000; font-weight: bold; padding: 5px 15px; border-radius: 6px; font-size: 15px; border: 2px solid #222; margin-bottom: 12px; letter-spacing: 1.5px; }
         .divider { border-top: 2px dashed #eee; margin: 10px 0 15px 0; }
-        
         .status { font-size: 20px; font-weight: 900; margin-bottom: 5px; color: #17a2b8; }
         .details { color: #666; font-size: 14px; font-weight: 500; }
     </style>
 </head>
 <body>
 
-    <!-- Map Yahan Dikhega -->
-    <div id="map"></div>
-    
-    <!-- Naya Info Panel Jisme School aur Bus Details hain -->
-    <div class="info-panel">
-        <div class="header-bar"></div>
-        
-        <!-- YAHAN SCHOOL KA NAAM CHANGE KAREIN -->
-        <div class="school-title">🏫 Sandila Public School</div>
-        
-        <!-- YAHAN BUS KA NUMBER CHANGE KAREIN -->
-        <div class="bus-plate">UP 30 AB 1234</div>
-        
-        <div class="divider"></div>
-        
-        <div class="status" id="status-text">🚌 Tracking Bus...</div>
-        <div class="details" id="dist-text">Waiting for driver to start route...</div>
+    <!-- 1. LOGIN SCREEN -->
+    <div id="login-screen" class="auth-container">
+        <div class="auth-box">
+            <h2>👪 Parent Login</h2>
+            <input type="number" id="login-phone" class="input-field" placeholder="Mobile Number (e.g. 9876543210)">
+            <input type="password" id="login-pass" class="input-field" placeholder="Password">
+            <button class="btn btn-primary" onclick="loginParent()">Login & Track Bus</button>
+            <span class="link-text" onclick="showScreen('register-screen')">New Parent? Register Here</span>
+        </div>
+    </div>
+
+    <!-- 2. REGISTRATION SCREEN -->
+    <div id="register-screen" class="auth-container" style="display: none;">
+        <div class="auth-box">
+            <h2>📝 New Registration</h2>
+            <input type="text" id="reg-name" class="input-field" placeholder="Child's Full Name">
+            <input type="number" id="reg-phone" class="input-field" placeholder="Mobile Number (10 digits)">
+            <input type="password" id="reg-pass" class="input-field" placeholder="Create Password">
+            
+            <button class="btn btn-secondary" onclick="getLocation()" id="loc-btn">📍 Get My Home Location</button>
+            <p id="loc-status" style="font-size: 12px; color: #28a745; display: none;">Location Saved ✅</p>
+            
+            <button class="btn btn-primary" onclick="registerParent()">Submit Details</button>
+            <span class="link-text" onclick="showScreen('login-screen')">Back to Login</span>
+        </div>
+    </div>
+
+    <!-- 3. MAP TRACKING SCREEN -->
+    <div id="map-screen">
+        <div id="map"></div>
+        <div class="info-panel">
+            <div class="header-bar"></div>
+            <div class="school-title">🏫 Sandila Public School</div>
+            <div class="bus-plate">UP 30 AB 1234</div>
+            <div class="divider"></div>
+            <div class="status" id="status-text">Tracking for: <span id="display-child-name" style="color:#222;">...</span></div>
+            <div class="details" id="dist-text">Fetching live location of the bus...</div>
+        </div>
     </div>
 
     <!-- Scripts -->
@@ -65,45 +90,126 @@
             projectId: "schoolbustracking-d2f2d",
             storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
             messagingSenderId: "537002829038",
-            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff",
-            measurementId: "G-DQCZ4N7YVN"
+            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff"
         };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
 
-        const map = L.map('map').setView([20.5937, 78.9629], 5); 
+        // Variables for Registration
+        let tempLat = null;
+        let tempLng = null;
 
-        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-            maxZoom: 20,
-            attribution: '© Google Maps'
-        }).addTo(map);
+        // UI Navigation
+        function showScreen(screenId) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('register-screen').style.display = 'none';
+            document.getElementById('map-screen').style.display = 'none';
+            document.getElementById(screenId).style.display = (screenId === 'map-screen') ? 'block' : 'flex';
+        }
 
-        const busIcon = L.icon({
-            iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png',
-            iconSize: [45, 45],
-            iconAnchor: [22, 22]
-        });
-        
-        let busMarker = null;
-
-        database.ref('busLocation').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if(data) {
-                const lat = data.lat;
-                const lng = data.lng;
-
-                if(!busMarker) {
-                    busMarker = L.marker([lat, lng], {icon: busIcon}).addTo(map);
-                } else {
-                    busMarker.setLatLng([lat, lng]);
-                }
-
-                map.setView([lat, lng], 17); 
-                
-                document.getElementById('status-text').innerText = "🚌 Bus is on the way!";
-                document.getElementById('dist-text').innerText = "Live tracking active. Speed and location updating...";
+        // 1. Get GPS Location function (For Registration)
+        function getLocation() {
+            const locBtn = document.getElementById('loc-btn');
+            locBtn.innerText = "Fetching...";
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    tempLat = position.coords.latitude;
+                    tempLng = position.coords.longitude;
+                    locBtn.style.display = 'none';
+                    document.getElementById('loc-status').style.display = 'block';
+                }, (error) => {
+                    alert("GPS Error: Please allow location permission!");
+                    locBtn.innerText = "📍 Get My Home Location";
+                }, { enableHighAccuracy: true });
+            } else {
+                alert("Geolocation is not supported by this browser.");
             }
-        });
+        }
+
+        // 2. Register New Parent
+        function registerParent() {
+            let name = document.getElementById('reg-name').value.trim();
+            let phone = document.getElementById('reg-phone').value.trim();
+            let pass = document.getElementById('reg-pass').value.trim();
+
+            if(!name || !phone || !pass) {
+                alert("Please fill all details!"); return;
+            }
+            if(!tempLat || !tempLng) {
+                alert("Please click 'Get My Home Location' first!"); return;
+            }
+
+            // Save in database using Phone Number as the unique ID
+            database.ref('student/' + phone).set({
+                name: name,
+                password: pass, // In a real app, never save raw passwords. For MVP, it works!
+                phone: phone,
+                status: "pending",
+                stopLat: tempLat,
+                stopLng: tempLng
+            }).then(() => {
+                alert("Registration Successful! Please Login.");
+                showScreen('login-screen');
+                document.getElementById('login-phone').value = phone;
+            });
+        }
+
+        // 3. Login Existing Parent
+        function loginParent() {
+            let phone = document.getElementById('login-phone').value.trim();
+            let pass = document.getElementById('login-pass').value.trim();
+
+            if(!phone || !pass) {
+                alert("Enter Phone and Password!"); return;
+            }
+
+            database.ref('student/' + phone).once('value', (snapshot) => {
+                const studentData = snapshot.val();
+                if(studentData) {
+                    if(studentData.password === pass) {
+                        // Login Success
+                        document.getElementById('display-child-name').innerText = studentData.name;
+                        showScreen('map-screen');
+                        startTracking(); // Map start
+                    } else {
+                        alert("Wrong Password!");
+                    }
+                } else {
+                    alert("Account not found! Please register first.");
+                }
+            });
+        }
+
+        // 4. Start Map Tracking (Runs only after successful login)
+        function startTracking() {
+            const map = L.map('map').setView([20.5937, 78.9629], 5); 
+            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                attribution: '© Google Maps'
+            }).addTo(map);
+
+            const busIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png',
+                iconSize: [45, 45],
+                iconAnchor: [22, 22]
+            });
+            let busMarker = null;
+
+            database.ref('busLocation').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if(data) {
+                    const lat = data.lat;
+                    const lng = data.lng;
+                    if(!busMarker) {
+                        busMarker = L.marker([lat, lng], {icon: busIcon}).addTo(map);
+                    } else {
+                        busMarker.setLatLng([lat, lng]);
+                    }
+                    map.setView([lat, lng], 17); 
+                    document.getElementById('dist-text').innerText = "Live tracking active. Speed and location updating...";
+                }
+            });
+        }
     </script>
 </body>
 </html>
