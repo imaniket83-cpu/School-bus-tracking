@@ -3,36 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parent App - Bus Tracker</title>
-    <!-- PWA Setup -->
+    <title>Parent App - Multi Bus Tracker</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#17a2b8">
-    <!-- Leaflet CSS for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6;}
         
-        /* AUTH SCREENS (Login & Register) */
+        /* AUTH SCREENS */
         .auth-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; padding: 20px; box-sizing: border-box; }
         .auth-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
         .auth-box h2 { margin-top: 0; color: #17a2b8; }
-        .input-field { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .input-field, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; margin-top: 10px; transition: 0.3s; }
         .btn-primary { background-color: #17a2b8; }
         .btn-secondary { background-color: #28a745; margin-bottom: 10px; }
+        .btn-warning { background-color: #ffb800; color: #222; margin-top: 20px;}
         .link-text { color: #007bff; cursor: pointer; margin-top: 15px; display: block; font-size: 14px; font-weight: bold; }
+        
+        /* DASHBOARD SCREEN (NAYA) */
+        #dashboard-screen { display: none; padding: 20px; max-width: 400px; margin: auto; }
+        .child-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: left; border-left: 5px solid #17a2b8;}
+        .child-name { font-size: 18px; font-weight: bold; color: #333; }
+        .child-bus { font-size: 14px; color: #666; margin-bottom: 10px; }
         
         /* MAP SCREEN */
         #map-screen { display: none; }
         #map { width: 100%; height: 65vh; z-index: 1; }
-        .info-panel { padding: 20px 20px; background: white; height: 35vh; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-top-left-radius: 25px; border-top-right-radius: 25px; position: relative; z-index: 1000; margin-top: -20px; text-align: center; }
-        .header-bar { width: 50px; height: 5px; background: #ddd; border-radius: 5px; margin: 0 auto 15px auto; }
-        .school-title { font-size: 20px; font-weight: 900; color: #222; margin-bottom: 5px; }
-        .bus-plate { display: inline-block; background: #ffcc00; color: #000; font-weight: bold; padding: 5px 15px; border-radius: 6px; font-size: 15px; border: 2px solid #222; margin-bottom: 12px; letter-spacing: 1.5px; }
-        .divider { border-top: 2px dashed #eee; margin: 10px 0 15px 0; }
-        .status { font-size: 20px; font-weight: 900; margin-bottom: 5px; color: #17a2b8; }
-        .details { color: #666; font-size: 14px; font-weight: 500; }
+        .info-panel { padding: 20px; background: white; height: 35vh; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-top-left-radius: 25px; border-top-right-radius: 25px; position: relative; z-index: 1000; margin-top: -20px; text-align: center; }
+        .bus-plate { display: inline-block; background: #ffcc00; color: #000; font-weight: bold; padding: 5px 15px; border-radius: 6px; font-size: 15px; border: 2px solid #222; margin-bottom: 10px; }
+        .status { font-size: 20px; font-weight: 900; color: #17a2b8; }
     </style>
 </head>
 <body>
@@ -41,22 +42,29 @@
     <div id="login-screen" class="auth-container">
         <div class="auth-box">
             <h2>👪 Parent Login</h2>
-            <input type="number" id="login-phone" class="input-field" placeholder="Mobile Number (e.g. 9876543210)">
+            <input type="number" id="login-phone" class="input-field" placeholder="Mobile Number">
             <input type="password" id="login-pass" class="input-field" placeholder="Password">
-            <button class="btn btn-primary" onclick="loginParent()">Login & Track Bus</button>
-            <span class="link-text" onclick="showScreen('register-screen')">New Parent? Register Here</span>
+            <button class="btn btn-primary" onclick="loginParent()">Login</button>
+            <span class="link-text" onclick="showScreen('register-screen')">Register New Child</span>
         </div>
     </div>
 
-    <!-- 2. REGISTRATION SCREEN -->
+    <!-- 2. REGISTRATION SCREEN (Ab yahan Bus select hogi) -->
     <div id="register-screen" class="auth-container" style="display: none;">
         <div class="auth-box">
-            <h2>📝 New Registration</h2>
+            <h2>📝 Add Child</h2>
             <input type="text" id="reg-name" class="input-field" placeholder="Child's Full Name">
-            <input type="number" id="reg-phone" class="input-field" placeholder="Mobile Number (10 digits)">
+            <input type="number" id="reg-phone" class="input-field" placeholder="Parent Mobile Number">
             <input type="password" id="reg-pass" class="input-field" placeholder="Create Password">
             
-            <button class="btn btn-secondary" onclick="getLocation()" id="loc-btn">📍 Get My Home Location</button>
+            <!-- NAYA: Bus Selection -->
+            <select id="reg-bus" class="input-field">
+                <option value="">-- Select Bus --</option>
+                <option value="bus1">Bus 1 (UP 30 AB 1111)</option>
+                <option value="bus2">Bus 2 (UP 30 XY 9999)</option>
+            </select>
+            
+            <button class="btn btn-secondary" onclick="getLocation()" id="loc-btn">📍 Save Home Location</button>
             <p id="loc-status" style="font-size: 12px; color: #28a745; display: none;">Location Saved ✅</p>
             
             <button class="btn btn-primary" onclick="registerParent()">Submit Details</button>
@@ -64,20 +72,29 @@
         </div>
     </div>
 
-    <!-- 3. MAP TRACKING SCREEN -->
+    <!-- 3. DASHBOARD SCREEN (Yahan saare bacche dikhenge) -->
+    <div id="dashboard-screen">
+        <h2 style="color: #333; text-align:center;">My Children</h2>
+        <div id="children-list">
+            <!-- JS se bacche yahan aayenge -->
+        </div>
+        <button class="btn btn-warning" onclick="showScreen('register-screen')">➕ Add Another Child</button>
+        <button class="btn" style="background:#dc3545;" onclick="showScreen('login-screen')">Logout</button>
+    </div>
+
+    <!-- 4. MAP TRACKING SCREEN -->
     <div id="map-screen">
         <div id="map"></div>
         <div class="info-panel">
-            <div class="header-bar"></div>
-            <div class="school-title">🏫 Sandila Public School</div>
-            <div class="bus-plate">UP 30 AB 1234</div>
-            <div class="divider"></div>
-            <div class="status" id="status-text">Tracking for: <span id="display-child-name" style="color:#222;">...</span></div>
-            <div class="details" id="dist-text">Fetching live location of the bus...</div>
+            <h3 style="margin: 0 0 10px 0; color:#333;">🏫 Sandila Public School</h3>
+            <div class="bus-plate" id="display-bus">BUS INFO</div>
+            <div style="border-top: 2px dashed #eee; margin: 10px 0;"></div>
+            <div class="status">Tracking: <span id="display-child-name" style="color:#222;">...</span></div>
+            <div style="color: #666; font-size: 14px; margin-top:5px;" id="dist-text">Fetching live location...</div>
+            <button class="btn btn-warning" style="margin-top: 15px; padding: 8px;" onclick="showScreen('dashboard-screen')">🔙 Back to Dashboard</button>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -95,118 +112,123 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
 
-        // Variables for Registration
-        let tempLat = null;
-        let tempLng = null;
+        let tempLat = null; let tempLng = null;
+        let mapInstance = null; let busMarker = null; let activeBusListener = null;
 
-        // UI Navigation
         function showScreen(screenId) {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('register-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'none';
             document.getElementById('map-screen').style.display = 'none';
-            document.getElementById(screenId).style.display = (screenId === 'map-screen') ? 'block' : 'flex';
+            document.getElementById(screenId).style.display = 'block';
+            
+            // Map screen se bahar aane par purani tracking rok do
+            if(screenId !== 'map-screen' && activeBusListener) {
+                database.ref('busLocations/' + activeBusListener).off();
+                activeBusListener = null;
+            }
         }
 
-        // 1. Get GPS Location function (For Registration)
         function getLocation() {
             const locBtn = document.getElementById('loc-btn');
             locBtn.innerText = "Fetching...";
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    tempLat = position.coords.latitude;
-                    tempLng = position.coords.longitude;
-                    locBtn.style.display = 'none';
-                    document.getElementById('loc-status').style.display = 'block';
-                }, (error) => {
-                    alert("GPS Error: Please allow location permission!");
-                    locBtn.innerText = "📍 Get My Home Location";
-                }, { enableHighAccuracy: true });
-            } else {
-                alert("Geolocation is not supported by this browser.");
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    tempLat = pos.coords.latitude; tempLng = pos.coords.longitude;
+                    locBtn.style.display = 'none'; document.getElementById('loc-status').style.display = 'block';
+                }, () => { alert("Please allow location!"); locBtn.innerText = "📍 Save Home Location"; }, { enableHighAccuracy: true });
             }
         }
 
-        // 2. Register New Parent
         function registerParent() {
             let name = document.getElementById('reg-name').value.trim();
             let phone = document.getElementById('reg-phone').value.trim();
             let pass = document.getElementById('reg-pass').value.trim();
+            let busId = document.getElementById('reg-bus').value;
 
-            if(!name || !phone || !pass) {
-                alert("Please fill all details!"); return;
-            }
-            if(!tempLat || !tempLng) {
-                alert("Please click 'Get My Home Location' first!"); return;
-            }
+            if(!name || !phone || !pass || !busId) { alert("Fill all details & select bus!"); return; }
+            if(!tempLat || !tempLng) { alert("Save Home Location first!"); return; }
 
-            // Save in database using Phone Number as the unique ID
-            database.ref('student/' + phone).set({
-                name: name,
-                password: pass, // In a real app, never save raw passwords. For MVP, it works!
-                phone: phone,
-                status: "pending",
-                stopLat: tempLat,
-                stopLng: tempLng
+            // NAYA: Bacche ko ek unique ID milegi taaki ek number pe kitne bhi bacche add ho sakein
+            let childId = "child_" + Date.now(); 
+
+            database.ref('students/' + childId).set({
+                name: name, phone: phone, password: pass, busId: busId, status: "pending", stopLat: tempLat, stopLng: tempLng
             }).then(() => {
-                alert("Registration Successful! Please Login.");
+                alert("Child Added Successfully!");
                 showScreen('login-screen');
                 document.getElementById('login-phone').value = phone;
+                // Reset form
+                document.getElementById('reg-name').value = '';
+                document.getElementById('loc-status').style.display = 'none';
+                document.getElementById('loc-btn').style.display = 'block';
+                tempLat = null; tempLng = null;
             });
         }
 
-        // 3. Login Existing Parent
         function loginParent() {
             let phone = document.getElementById('login-phone').value.trim();
             let pass = document.getElementById('login-pass').value.trim();
+            if(!phone || !pass) { alert("Enter Phone and Password!"); return; }
 
-            if(!phone || !pass) {
-                alert("Enter Phone and Password!"); return;
-            }
-
-            database.ref('student/' + phone).once('value', (snapshot) => {
-                const studentData = snapshot.val();
-                if(studentData) {
-                    if(studentData.password === pass) {
-                        // Login Success
-                        document.getElementById('display-child-name').innerText = studentData.name;
-                        showScreen('map-screen');
-                        startTracking(); // Map start
-                    } else {
-                        alert("Wrong Password!");
+            document.getElementById('children-list').innerHTML = "<p>Loading...</p>";
+            
+            // Find all children with this phone number
+            database.ref('students').once('value', (snapshot) => {
+                let foundChildren = [];
+                snapshot.forEach((childSnap) => {
+                    let data = childSnap.val();
+                    if(data.phone === phone && data.password === pass) {
+                        foundChildren.push({...data, id: childSnap.key});
                     }
+                });
+
+                if(foundChildren.length > 0) {
+                    showScreen('dashboard-screen');
+                    let html = "";
+                    foundChildren.forEach(kid => {
+                        let busName = kid.busId === 'bus1' ? 'Bus 1 (UP 30 AB 1111)' : 'Bus 2 (UP 30 XY 9999)';
+                        html += `
+                        <div class="child-card">
+                            <div class="child-name">👦 ${kid.name}</div>
+                            <div class="child-bus">🚌 Assigned to: ${busName}</div>
+                            <button class="btn btn-primary" onclick="trackChild('${kid.name}', '${kid.busId}')">📍 Track ${kid.name}'s Bus</button>
+                        </div>`;
+                    });
+                    document.getElementById('children-list').innerHTML = html;
                 } else {
-                    alert("Account not found! Please register first.");
+                    alert("No account found or Wrong Password!");
                 }
             });
         }
 
-        // 4. Start Map Tracking (Runs only after successful login)
-        function startTracking() {
-            const map = L.map('map').setView([20.5937, 78.9629], 5); 
-            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                attribution: '© Google Maps'
-            }).addTo(map);
+        function trackChild(childName, busId) {
+            document.getElementById('display-child-name').innerText = childName;
+            document.getElementById('display-bus').innerText = busId.toUpperCase();
+            showScreen('map-screen');
 
-            const busIcon = L.icon({
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png',
-                iconSize: [45, 45],
-                iconAnchor: [22, 22]
-            });
-            let busMarker = null;
-
-            database.ref('busLocation').on('value', (snapshot) => {
+            // Setup Map
+            if(!mapInstance) {
+                mapInstance = L.map('map').setView([20.5937, 78.9629], 5); 
+                L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(mapInstance);
+            }
+            
+            const busIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png', iconSize: [45, 45], iconAnchor: [22, 22] });
+            
+            // Purani tracking clear karein aur nayi Bus track karein
+            activeBusListener = busId;
+            database.ref('busLocations/' + busId).on('value', (snapshot) => {
                 const data = snapshot.val();
                 if(data) {
-                    const lat = data.lat;
-                    const lng = data.lng;
                     if(!busMarker) {
-                        busMarker = L.marker([lat, lng], {icon: busIcon}).addTo(map);
+                        busMarker = L.marker([data.lat, data.lng], {icon: busIcon}).addTo(mapInstance);
                     } else {
-                        busMarker.setLatLng([lat, lng]);
+                        busMarker.setLatLng([data.lat, data.lng]);
                     }
-                    map.setView([lat, lng], 17); 
-                    document.getElementById('dist-text').innerText = "Live tracking active. Speed and location updating...";
+                    mapInstance.setView([data.lat, data.lng], 17); 
+                    document.getElementById('dist-text').innerText = "Live tracking active...";
+                } else {
+                    document.getElementById('dist-text').innerText = "Bus has not started the trip yet.";
                 }
             });
         }
