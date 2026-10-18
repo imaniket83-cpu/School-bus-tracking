@@ -11,7 +11,7 @@
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6;}
         
-        /* AUTH SCREENS - Form ko perfectly Center aur Scrollable banane ke liye min-height lagaya hai */
+        /* AUTH SCREENS - Form hamesha perfectly Center rahega */
         .auth-container { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 30px 15px; box-sizing: border-box; }
         .auth-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
         .auth-box h2 { margin-top: 0; color: #17a2b8; margin-bottom: 5px; }
@@ -23,18 +23,15 @@
         .btn-warning { background-color: #ffb800; color: #222; margin-top: 20px;}
         .link-text { color: #007bff; cursor: pointer; margin-top: 15px; display: block; font-size: 14px; font-weight: bold; text-decoration: underline;}
         
-        /* NAYA: Child Entry Box ki styling */
         .child-entry { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 15px; text-align: left; position: relative; }
         .child-entry h4 { margin: 0 0 10px 0; color: #444; font-size: 14px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
         .btn-add-more { background: #e9ecef; color: #333; border: 2px dashed #bbb; margin-bottom: 15px; }
         
-        /* DASHBOARD SCREEN */
         #dashboard-screen { display: none; padding: 20px; max-width: 400px; margin: auto; }
         .child-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: left; border-left: 5px solid #17a2b8;}
         .child-name { font-size: 18px; font-weight: bold; color: #333; }
         .child-bus { font-size: 14px; color: #666; margin-bottom: 10px; }
         
-        /* MAP SCREEN */
         #map-screen { display: none; }
         #map { width: 100%; height: 65vh; z-index: 1; }
         .info-panel { padding: 20px; background: white; height: 35vh; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-top-left-radius: 25px; border-top-right-radius: 25px; position: relative; z-index: 1000; margin-top: -20px; text-align: center; }
@@ -55,7 +52,7 @@
         </div>
     </div>
 
-    <!-- 2. REGISTRATION SCREEN (Dhamakedar UI) -->
+    <!-- 2. REGISTRATION SCREEN -->
     <div id="register-screen" class="auth-container" style="display: none;">
         <div class="auth-box">
             <h2>📝 Registration</h2>
@@ -66,7 +63,6 @@
             
             <div style="border-top: 2px solid #eee; margin: 15px 0;"></div>
 
-            <!-- Dynamic Children Container -->
             <div id="children-container">
                 <div class="child-entry">
                     <h4>Child 1</h4>
@@ -79,7 +75,6 @@
                 </div>
             </div>
 
-            <!-- NAYA: Add More Child Button -->
             <button class="btn btn-add-more" onclick="addAnotherChild()">➕ Add Another Child</button>
             
             <button class="btn btn-secondary" onclick="getLocation()" id="loc-btn">📍 Save Home Location</button>
@@ -93,9 +88,7 @@
     <!-- 3. DASHBOARD SCREEN -->
     <div id="dashboard-screen">
         <h2 style="color: #333; text-align:center;">My Children</h2>
-        <div id="children-list">
-            <!-- JS will populate this -->
-        </div>
+        <div id="children-list"></div>
         <button class="btn" style="background:#dc3545; margin-top:20px;" onclick="showScreen('login-screen')">Logout</button>
     </div>
 
@@ -138,18 +131,20 @@
             document.getElementById('register-screen').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'none';
             document.getElementById('map-screen').style.display = 'none';
-            document.getElementById(screenId).style.display = 'block';
             
-            if(screenId === 'register-screen') {
-                document.getElementById('register-screen').style.display = 'flex'; // For centering
+            // Yahan fix kiya gaya hai - Login aur Register hamesha center rahenge
+            if(screenId === 'login-screen' || screenId === 'register-screen') {
+                document.getElementById(screenId).style.display = 'flex';
+            } else {
+                document.getElementById(screenId).style.display = 'block';
             }
+            
             if(screenId !== 'map-screen' && activeBusListener) {
                 database.ref('busLocations/' + activeBusListener).off();
                 activeBusListener = null;
             }
         }
 
-        // NAYA: Multi-Child UI Function
         function addAnotherChild() {
             childCount++;
             const container = document.getElementById('children-container');
@@ -178,7 +173,6 @@
             }
         }
 
-        // NAYA: Ek sath multiple bacche database me save karna
         function registerParent() {
             let phone = document.getElementById('reg-phone').value.trim();
             let pass = document.getElementById('reg-pass').value.trim();
@@ -188,7 +182,6 @@
             let childEntries = document.getElementsByClassName('child-entry');
             let childrenData = [];
 
-            // Loop lagakar sab bacchon ka data extract karna
             for(let i=0; i<childEntries.length; i++) {
                 let name = childEntries[i].querySelector('.child-name').value.trim();
                 let bus = childEntries[i].querySelector('.child-bus').value;
@@ -199,7 +192,6 @@
                 childrenData.push({ name: name, busId: bus });
             }
 
-            // Sabko Firebase me push karna using loop
             let promises = childrenData.map(kid => {
                 let childId = "child_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
                 return database.ref('students/' + childId).set({
@@ -207,13 +199,11 @@
                 });
             });
 
-            // Jab sab save ho jayein tab success message dikhana
             Promise.all(promises).then(() => {
                 alert("Registration Successful! Please Login.");
                 showScreen('login-screen');
                 document.getElementById('login-phone').value = phone;
                 
-                // Form Clear kar do
                 document.getElementById('reg-phone').value = '';
                 document.getElementById('reg-pass').value = '';
                 document.getElementById('loc-status').style.display = 'none';
