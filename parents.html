@@ -11,7 +11,6 @@
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6;}
         
-        /* AUTH SCREENS - Form hamesha perfectly Center rahega */
         .auth-container { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 30px 15px; box-sizing: border-box; }
         .auth-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
         .auth-box h2 { margin-top: 0; color: #17a2b8; margin-bottom: 5px; }
@@ -41,7 +40,6 @@
 </head>
 <body>
 
-    <!-- 1. LOGIN SCREEN -->
     <div id="login-screen" class="auth-container">
         <div class="auth-box">
             <h2>👪 Parent Login</h2>
@@ -52,7 +50,6 @@
         </div>
     </div>
 
-    <!-- 2. REGISTRATION SCREEN -->
     <div id="register-screen" class="auth-container" style="display: none;">
         <div class="auth-box">
             <h2>📝 Registration</h2>
@@ -85,14 +82,12 @@
         </div>
     </div>
 
-    <!-- 3. DASHBOARD SCREEN -->
     <div id="dashboard-screen">
         <h2 style="color: #333; text-align:center;">My Children</h2>
         <div id="children-list"></div>
-        <button class="btn" style="background:#dc3545; margin-top:20px;" onclick="showScreen('login-screen')">Logout</button>
+        <button class="btn" style="background:#dc3545; margin-top:20px;" onclick="logoutParent()">Logout</button>
     </div>
 
-    <!-- 4. MAP TRACKING SCREEN -->
     <div id="map-screen">
         <div id="map"></div>
         <div class="info-panel">
@@ -126,167 +121,8 @@
         let mapInstance = null; let busMarker = null; let activeBusListener = null;
         let childCount = 1;
 
-        function showScreen(screenId) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('register-screen').style.display = 'none';
-            document.getElementById('dashboard-screen').style.display = 'none';
-            document.getElementById('map-screen').style.display = 'none';
-            
-            // Yahan fix kiya gaya hai - Login aur Register hamesha center rahenge
-            if(screenId === 'login-screen' || screenId === 'register-screen') {
-                document.getElementById(screenId).style.display = 'flex';
-            } else {
-                document.getElementById(screenId).style.display = 'block';
-            }
-            
-            if(screenId !== 'map-screen' && activeBusListener) {
-                database.ref('busLocations/' + activeBusListener).off();
-                activeBusListener = null;
-            }
-        }
-
-        function addAnotherChild() {
-            childCount++;
-            const container = document.getElementById('children-container');
-            const newDiv = document.createElement('div');
-            newDiv.className = 'child-entry';
-            newDiv.innerHTML = `
-                <h4>Child ${childCount}</h4>
-                <input type="text" class="input-field child-name" placeholder="Child's Full Name">
-                <select class="input-field child-bus">
-                    <option value="">-- Select Bus --</option>
-                    <option value="bus1">Bus 1 (UP 30 AB 1111)</option>
-                    <option value="bus2">Bus 2 (UP 30 XY 9999)</option>
-                </select>
-            `;
-            container.appendChild(newDiv);
-        }
-
-        function getLocation() {
-            const locBtn = document.getElementById('loc-btn');
-            locBtn.innerText = "Fetching...";
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    tempLat = pos.coords.latitude; tempLng = pos.coords.longitude;
-                    locBtn.style.display = 'none'; document.getElementById('loc-status').style.display = 'block';
-                }, () => { alert("Please allow location!"); locBtn.innerText = "📍 Save Home Location"; }, { enableHighAccuracy: true });
-            }
-        }
-
-        function registerParent() {
-            let phone = document.getElementById('reg-phone').value.trim();
-            let pass = document.getElementById('reg-pass').value.trim();
-            if(!phone || !pass) { alert("Enter Parent Mobile and Password!"); return; }
-            if(!tempLat || !tempLng) { alert("Save Home Location first!"); return; }
-
-            let childEntries = document.getElementsByClassName('child-entry');
-            let childrenData = [];
-
-            for(let i=0; i<childEntries.length; i++) {
-                let name = childEntries[i].querySelector('.child-name').value.trim();
-                let bus = childEntries[i].querySelector('.child-bus').value;
-                if(!name || !bus) {
-                    alert(`Please fill Name and select Bus for Child ${i+1}`);
-                    return;
-                }
-                childrenData.push({ name: name, busId: bus });
-            }
-
-            let promises = childrenData.map(kid => {
-                let childId = "child_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-                return database.ref('students/' + childId).set({
-                    name: kid.name, phone: phone, password: pass, busId: kid.busId, status: "pending", stopLat: tempLat, stopLng: tempLng
-                });
-            });
-
-            Promise.all(promises).then(() => {
-                alert("Registration Successful! Please Login.");
-                showScreen('login-screen');
-                document.getElementById('login-phone').value = phone;
-                
-                document.getElementById('reg-phone').value = '';
-                document.getElementById('reg-pass').value = '';
-                document.getElementById('loc-status').style.display = 'none';
-                document.getElementById('loc-btn').style.display = 'block';
-                document.getElementById('loc-btn').innerText = "📍 Save Home Location";
-                tempLat = null; tempLng = null;
-                childCount = 1;
-                document.getElementById('children-container').innerHTML = `
-                    <div class="child-entry">
-                        <h4>Child 1</h4>
-                        <input type="text" class="input-field child-name" placeholder="Child's Full Name">
-                        <select class="input-field child-bus">
-                            <option value="">-- Select Bus --</option>
-                            <option value="bus1">Bus 1 (UP 30 AB 1111)</option>
-                            <option value="bus2">Bus 2 (UP 30 XY 9999)</option>
-                        </select>
-                    </div>`;
-            });
-        }
-
-        function loginParent() {
-            let phone = document.getElementById('login-phone').value.trim();
-            let pass = document.getElementById('login-pass').value.trim();
-            if(!phone || !pass) { alert("Enter Phone and Password!"); return; }
-
-            document.getElementById('children-list').innerHTML = "<p>Loading...</p>";
-            
-            database.ref('students').once('value', (snapshot) => {
-                let foundChildren = [];
-                snapshot.forEach((childSnap) => {
-                    let data = childSnap.val();
-                    if(data.phone === phone && data.password === pass) {
-                        foundChildren.push({...data, id: childSnap.key});
-                    }
-                });
-
-                if(foundChildren.length > 0) {
-                    showScreen('dashboard-screen');
-                    let html = "";
-                    foundChildren.forEach(kid => {
-                        let busName = kid.busId === 'bus1' ? 'Bus 1 (UP 30 AB 1111)' : 'Bus 2 (UP 30 XY 9999)';
-                        html += `
-                        <div class="child-card">
-                            <div class="child-name">👦 ${kid.name}</div>
-                            <div class="child-bus">🚌 Assigned to: ${busName}</div>
-                            <button class="btn btn-primary" onclick="trackChild('${kid.name}', '${kid.busId}')">📍 Track ${kid.name}'s Bus</button>
-                        </div>`;
-                    });
-                    document.getElementById('children-list').innerHTML = html;
-                } else {
-                    alert("No account found or Wrong Password!");
-                }
-            });
-        }
-
-        function trackChild(childName, busId) {
-            document.getElementById('display-child-name').innerText = childName;
-            document.getElementById('display-bus').innerText = busId.toUpperCase();
-            showScreen('map-screen');
-
-            if(!mapInstance) {
-                mapInstance = L.map('map').setView([20.5937, 78.9629], 5); 
-                L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(mapInstance);
-            }
-            
-            const busIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png', iconSize: [45, 45], iconAnchor: [22, 22] });
-            
-            activeBusListener = busId;
-            database.ref('busLocations/' + busId).on('value', (snapshot) => {
-                const data = snapshot.val();
-                if(data) {
-                    if(!busMarker) {
-                        busMarker = L.marker([data.lat, data.lng], {icon: busIcon}).addTo(mapInstance);
-                    } else {
-                        busMarker.setLatLng([data.lat, data.lng]);
-                    }
-                    mapInstance.setView([data.lat, data.lng], 17); 
-                    document.getElementById('dist-text').innerText = "Live tracking active...";
-                } else {
-                    document.getElementById('dist-text').innerText = "Bus has not started the trip yet.";
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+        // Auto-login check on page load
+        window.onload = function() {
+            let savedPhone = localStorage.getItem('parentPhone');
+            if(savedPhone) {
+                loadDashboard(savedPhone);
