@@ -29,38 +29,33 @@
         .sidebar { flex: 1; min-width: 250px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 65vh; overflow-y: auto; box-sizing: border-box; }
         .sidebar h2 { margin-top: 0; color: #1a237e; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
-        .bus-card { background: #f8f9fa; border-left: 5px solid #ffb800; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+        .bus-card { background: #f8f9fa; border-left: 5px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
         .bus-title { font-weight: bold; font-size: 16px; color: #222; margin-bottom: 5px; }
         .bus-detail { font-size: 13px; color: #555; margin-bottom: 3px; }
         .bus-shift { display: inline-block; background: #e3f2fd; color: #0d47a1; font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: bold; margin-top: 5px; }
         
-        /* Custom map marker style to remove background */
         .custom-bus-emoji { background: transparent; border: none; }
     </style>
 </head>
 <body>
 
     <div class="navbar">
-        <div>📊 Master Admin Panel</div>
+        <div>📊 Live Dashboard</div>
         <div class="school-name">🏫 Sandila Public School</div>
     </div>
 
     <div class="stats-container">
         <div class="stat-card border-blue">
-            <h3 id="total-students">0</h3>
-            <p>Total Students</p>
+            <h3 id="total-students">0</h3><p>Total Students</p>
         </div>
         <div class="stat-card border-yellow">
-            <h3 id="waiting-students">0</h3>
-            <p>Waiting for Bus</p>
+            <h3 id="waiting-students">0</h3><p>Waiting for Bus</p>
         </div>
         <div class="stat-card border-green">
-            <h3 id="boarded-students">0</h3>
-            <p>Boarded (Inside)</p>
+            <h3 id="boarded-students">0</h3><p>Boarded (Inside)</p>
         </div>
         <div class="stat-card border-red">
-            <h3 id="absent-students">0</h3>
-            <p>Absent Today</p>
+            <h3 id="absent-students">0</h3><p>Absent Today</p>
         </div>
     </div>
 
@@ -69,9 +64,9 @@
             <div id="admin-map"></div>
         </div>
         <div class="sidebar">
-            <h2>🚍 Active Buses on Duty</h2>
+            <h2>🚍 Fleet Status</h2>
             <div id="active-buses-list">
-                <p style="color: #888; font-size: 14px; text-align: center; margin-top: 50px;">Waiting for drivers to start route...</p>
+                <p style="color: #888; font-size: 14px; text-align: center; margin-top: 50px;">Loading fleet data...</p>
             </div>
         </div>
     </div>
@@ -81,15 +76,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
-            authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
-            databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com",
-            projectId: "schoolbustracking-d2f2d",
-            storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
-            messagingSenderId: "537002829038",
-            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE", authDomain: "schoolbustracking-d2f2d.firebaseapp.com", databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com", projectId: "schoolbustracking-d2f2d", storageBucket: "schoolbustracking-d2f2d.firebasestorage.app", messagingSenderId: "537002829038", appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff" };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
 
@@ -97,75 +84,92 @@
         L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(adminMap);
         
         let busMarkers = {}; 
+        const busIcon = L.divIcon({ html: '<div style="font-size: 35px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">🚌</div>', className: 'custom-bus-emoji', iconSize: [40, 40], iconAnchor: [20, 20], popupAnchor: [0, -20] });
 
-        // NAYA: 100% Guaranteed Load hone wala Emoji Icon
-        const busIcon = L.divIcon({ 
-            html: '<div style="font-size: 35px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">🚌</div>',
-            className: 'custom-bus-emoji',
-            iconSize: [40, 40], 
-            iconAnchor: [20, 20],
-            popupAnchor: [0, -20]
-        });
-
+        // Students Analytics
         database.ref('students').on('value', (snapshot) => {
-            let total = 0; let waiting = 0; let boarded = 0; let absent = 0;
-            
+            let total = 0, waiting = 0, boarded = 0, absent = 0;
             snapshot.forEach((child) => {
-                total++;
-                let status = child.val().status;
+                total++; let status = child.val().status;
                 if(status === 'pending') waiting++;
                 else if(status === 'boarded') boarded++;
                 else if(status === 'absent') absent++;
             });
-
-            document.getElementById('total-students').innerText = total;
-            document.getElementById('waiting-students').innerText = waiting;
-            document.getElementById('boarded-students').innerText = boarded;
-            document.getElementById('absent-students').innerText = absent;
+            document.getElementById('total-students').innerText = total; document.getElementById('waiting-students').innerText = waiting;
+            document.getElementById('boarded-students').innerText = boarded; document.getElementById('absent-students').innerText = absent;
         });
 
-        database.ref('busLocations').on('value', (snapshot) => {
-            let activeBusesHTML = "";
+        // NAYA LOGIC: Pehle saari registered buses laao, fir locations se compare karo
+        let allRegisteredBuses = {};
+        let liveLocations = {};
+
+        database.ref('buses').on('value', snap => {
+            allRegisteredBuses = snap.val() || {};
+            updateDashboard();
+        });
+
+        database.ref('busLocations').on('value', snap => {
+            liveLocations = snap.val() || {};
+            updateDashboard();
+        });
+
+        function updateDashboard() {
+            let activeHTML = "";
+            let inactiveHTML = "";
             let bounds = []; 
-            
-            let hasActiveBuses = false;
+            let activeCount = 0;
+            let inactiveCount = 0;
 
-            snapshot.forEach((child) => {
-                let busId = child.key;
-                let data = child.val();
+            for(let busId in allRegisteredBuses) {
+                let busData = allRegisteredBuses[busId];
+                let loc = liveLocations[busId];
                 
-                if(data.lat && data.lng) {
-                    hasActiveBuses = true;
-                    let busLabel = busId.toUpperCase();
-                    
+                // Agar 12 ghante ke andar ki location hai, toh ACTIVE maano
+                let isActive = loc && loc.lat && (Date.now() - loc.timestamp < 12 * 60 * 60 * 1000);
+
+                if(isActive) {
+                    activeCount++;
                     if(!busMarkers[busId]) {
-                        busMarkers[busId] = L.marker([data.lat, data.lng], {icon: busIcon}).addTo(adminMap);
-                        busMarkers[busId].bindPopup(`<b>${busLabel}</b><br>Driver: ${data.driverName || 'Unknown'}`);
+                        busMarkers[busId] = L.marker([loc.lat, loc.lng], {icon: busIcon}).addTo(adminMap);
                     } else {
-                        busMarkers[busId].setLatLng([data.lat, data.lng]);
+                        busMarkers[busId].setLatLng([loc.lat, loc.lng]);
                     }
-                    bounds.push([data.lat, data.lng]);
+                    busMarkers[busId].bindPopup(`<b>${busData.name}</b><br>Driver: ${loc.driverName}`);
+                    bounds.push([loc.lat, loc.lng]);
 
-                    activeBusesHTML += `
-                        <div class="bus-card">
-                            <div class="bus-title">🚍 ${busLabel}</div>
-                            <div class="bus-detail">👨‍✈️ Driver: <b>${data.driverName || 'N/A'}</b></div>
-                            <div class="bus-detail">📞 Phone: <a href="tel:${data.driverPhone}" style="color:#007bff; text-decoration:none;">${data.driverPhone || 'N/A'}</a></div>
-                            ${data.shift ? `<div class="bus-shift">${data.shift}</div>` : ''}
-                        </div>
-                    `;
-                }
-            });
+                    activeHTML += `
+                        <div class="bus-card" style="border-left-color: #28a745;">
+                            <div class="bus-title" style="color: #155724;">🟢 ${busData.name}</div>
+                            <div class="bus-detail">👨‍✈️ Driver: <b>${loc.driverName}</b></div>
+                            <div class="bus-detail">📞 Phone: <a href="tel:${loc.driverPhone}" style="color:#007bff; text-decoration:none;">${loc.driverPhone}</a></div>
+                            <div class="bus-shift">${loc.shift}</div>
+                        </div>`;
+                } else {
+                    inactiveCount++;
+                    // Agar purana marker map par hai toh hatao
+                    if(busMarkers[busId]) {
+                        adminMap.removeLayer(busMarkers[busId]);
+                        delete busMarkers[busId];
+                    }
 
-            if(hasActiveBuses) {
-                document.getElementById('active-buses-list').innerHTML = activeBusesHTML;
-                if(bounds.length > 0) {
-                    adminMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+                    inactiveHTML += `
+                        <div class="bus-card" style="border-left-color: #dc3545; background-color: #fff5f5;">
+                            <div class="bus-title" style="color: #dc3545;">🔴 ${busData.name}</div>
+                            <div class="bus-detail" style="color:#666;">Status: <b style="color:#dc3545;">Duty Not Started</b></div>
+                            <div class="bus-detail" style="font-size:11px; margin-top:5px; color:#888;">(Admin Action Required)</div>
+                        </div>`;
                 }
-            } else {
-                document.getElementById('active-buses-list').innerHTML = `<p style="color: #888; font-size: 14px; text-align: center; margin-top: 50px;">No buses are currently on duty.</p>`;
             }
-        });
+
+            let finalDisplay = "";
+            if(activeCount > 0) finalDisplay += `<h3 style="color:#28a745; margin-top:0; font-size:15px; border-bottom:1px solid #ccc; padding-bottom:5px;">Active on Route (${activeCount})</h3>` + activeHTML;
+            if(inactiveCount > 0) finalDisplay += `<h3 style="color:#dc3545; margin-top:20px; font-size:15px; border-bottom:1px solid #ccc; padding-bottom:5px;">Inactive / Offline (${inactiveCount})</h3>` + inactiveHTML;
+            
+            if(activeCount === 0 && inactiveCount === 0) finalDisplay = `<p style="color: #888; font-size: 14px; text-align: center; margin-top: 50px;">No buses registered in system.</p>`;
+
+            document.getElementById('active-buses-list').innerHTML = finalDisplay;
+            if(bounds.length > 0) adminMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+        }
     </script>
 </body>
 </html>
