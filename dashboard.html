@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Admin Panel - School Bus</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; }
+        
+        /* Navbar */
+        .navbar { background-color: #1a237e; color: white; padding: 15px 20px; font-size: 22px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .school-name { font-size: 16px; font-weight: normal; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; }
+
+        /* Stats Container */
+        .stats-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; }
+        .stat-card { flex: 1; min-width: 150px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #ccc; }
+        .stat-card h3 { margin: 0; font-size: 32px; color: #333; }
+        .stat-card p { margin: 5px 0 0 0; font-size: 14px; color: #666; font-weight: bold; }
+        
+        .border-blue { border-bottom-color: #0d6efd; }
+        .border-yellow { border-bottom-color: #ffc107; }
+        .border-green { border-bottom-color: #198754; }
+        .border-red { border-bottom-color: #dc3545; }
+
+        /* Main Content Grid */
+        .main-grid { display: flex; flex-wrap: wrap; padding: 0 20px 20px 20px; gap: 20px; }
+        
+        /* Map Area */
+        .map-section { flex: 2; min-width: 300px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 65vh; position: relative; }
+        #admin-map { width: 100%; height: 100%; }
+
+        /* Sidebar - Active Buses */
+        .sidebar { flex: 1; min-width: 250px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 65vh; overflow-y: auto; box-sizing: border-box; }
+        .sidebar h2 { margin-top: 0; color: #1a237e; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        .bus-card { background: #f8f9fa; border-left: 5px solid #ffb800; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+        .bus-title { font-weight: bold; font-size: 16px; color: #222; margin-bottom: 5px; }
+        .bus-detail { font-size: 13px; color: #555; margin-bottom: 3px; }
+        .bus-shift { display: inline-block; background: #e3f2fd; color: #0d47a1; font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: bold; margin-top: 5px; }
+        
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div>📊 Master Admin Panel</div>
+        <div class="school-name">🏫 Sandila Public School</div>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-card border-blue">
+            <h3 id="total-students">0</h3>
+            <p>Total Students</p>
+        </div>
+        <div class="stat-card border-yellow">
+            <h3 id="waiting-students">0</h3>
+            <p>Waiting for Bus</p>
+        </div>
+        <div class="stat-card border-green">
+            <h3 id="boarded-students">0</h3>
+            <p>Boarded (Inside)</p>
+        </div>
+        <div class="stat-card border-red">
+            <h3 id="absent-students">0</h3>
+            <p>Absent Today</p>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <div class="map-section">
+            <div id="admin-map"></div>
+        </div>
+        <div class="sidebar">
+            <h2>🚍 Active Buses on Duty</h2>
+            <div id="active-buses-list">
+                <p style="color: #888; font-size: 14px; text-align: center; margin-top: 50px;">Waiting for drivers to start route...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
+            authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
+            databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com",
+            projectId: "schoolbustracking-d2f2d",
+            storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
+            messagingSenderId: "537002829038",
+            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const database = firebase.database();
+
+        // Map Initialization
+        let adminMap = L.map('admin-map').setView([20.5937, 78.9629], 5); 
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(adminMap);
+        
+        let busMarkers = {}; // Store all active bus markers
+
+        const busIcon = L.icon({ 
+            iconUrl: 'https://img.icons8.com/color/96/school-bus.png', 
+            iconSize: [40, 40], 
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
+        });
+
+        // 1. Live Student Analytics (Counters)
+        database.ref('students').on('value', (snapshot) => {
+            let total = 0; let waiting = 0; let boarded = 0; let absent = 0;
+            
+            snapshot.forEach((child) => {
+                total++;
+                let status = child.val().status;
+                if(status === 'pending') waiting++;
+                else if(status === 'boarded') boarded++;
+                else if(status === 'absent') absent++;
+            });
+
+            document.getElementById('total-students').innerText = total;
+            document.getElementById('waiting-students').innerText = waiting;
+            document.getElementById('boarded-students').innerText = boarded;
+            document.getElementById('absent-students').innerText = absent;
+        });
+
+        // 2. Live Master Map & Sidebar Logic
+        database.ref('busLocations').on('value', (snapshot) => {
+            let activeBusesHTML = "";
+            let bounds = []; // To zoom map to fit all buses
+            
+            let hasActiveBuses = false;
+
+            snapshot.forEach((child) => {
+                let busId = child.key;
+                let data = child.val();
+                
+                // Check if bus data is fresh (updated in last 12 hours)
+                let isFresh = (Date.now() - data.timestamp) < (12 * 60 * 60 * 1000);
+                
+                if(isFresh) {
+                    hasActiveBuses = true;
+                    let busLabel = busId.toUpperCase();
+                    
+                    // Update Map Markers
+                    if(!busMarkers[busId]) {
+                        busMarkers[busId] = L.marker([data.lat, data.lng], {icon: busIcon}).addTo(adminMap);
+                        busMarkers[busId].bindPopup(`<b>${busLabel}</b><br>Driver: ${data.driverName || 'Unknown'}`);
+                    } else {
+                        busMarkers[busId].setLatLng([data.lat, data.lng]);
+                    }
+                    bounds.push([data.lat, data.lng]);
+
+                    // Update Sidebar List
+                    activeBusesHTML += `
+                        <div class="bus-card">
+                            <div class="bus-title">🚍 ${busLabel}</div>
+                            <div class="bus-detail">👨‍✈️ Driver: <b>${data.driverName || 'N/A'}</b></div>
+                            <div class="bus-detail">📞 Phone: <a href="tel:${data.driverPhone}" style="color:#007bff; text-decoration:none;">${data.driverPhone || 'N/A'}</a></div>
+                            ${data.shift ? `<div class="bus-shift">${data.shift}</div>` : ''}
+                        </div>
+                    `;
+                }
+            });
+
+            if(hasActiveBuses) {
+                document.getElementById('active-buses-list').innerHTML = activeBusesHTML;
+                // Auto adjust map zoom to fit all active buses
+                if(bounds.length > 0) {
+                    adminMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+                }
+            } else {
+                document.getElementById('active-buses-list').innerHTML = `<p style="color: #888; font-size: 14px; text-align: center; margin-top: 50px;">No buses are currently on duty.</p>`;
+            }
+        });
+
+    </script>
+</body>
+</html>
