@@ -5,62 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>School Transit - Central Portal</title>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, #f4f7f6 0%, #e0eafc 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, #f4f7f6 0%, #e0eafc 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
         
-        .header { text-align: center; margin-bottom: 40px; }
-        .header h1 { color: #1a237e; font-size: 40px; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
-        .header p { color: #555; font-size: 18px; margin-top: 10px; font-weight: 500; }
+        /* NAYA: Emergency Alert Banner */
+        .alert-banner { background-color: #dc3545; color: white; width: 100%; padding: 8px 0; font-size: 14px; font-weight: bold; font-family: monospace; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .alert-ticker { width: 100%; overflow: hidden; white-space: nowrap; }
+        .alert-ticker span { display: inline-block; padding-left: 100%; animation: scrollTicker 15s linear infinite; }
+        @keyframes scrollTicker { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; max-width: 900px; width: 90%; }
+        /* NAYA: Top Bar with Clock and Status */
+        .top-bar { width: 90%; max-width: 1000px; display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 13px; font-weight: bold; color: #555; background: rgba(255,255,255,0.7); padding: 10px 20px; border-radius: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); box-sizing: border-box;}
+        .status-badge { background: #d4edda; color: #155724; padding: 5px 12px; border-radius: 20px; border: 1px solid #c3e6cb; display: flex; align-items: center; gap: 5px;}
+        .live-dot { width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.4;} 100% {opacity: 1;} }
 
-        .portal-card { background: white; padding: 30px 20px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.08); text-align: center; cursor: pointer; text-decoration: none; transition: all 0.3s ease; border-top: 6px solid #ccc; }
-        .portal-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+        .header { text-align: center; margin: 30px 0; }
+        /* NAYA: Logo Placeholder */
+        .school-logo { max-height: 80px; margin-bottom: 10px; border-radius: 10px; }
+        .header h1 { color: #1a237e; font-size: 38px; margin: 0; text-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
+        .header p { color: #555; font-size: 16px; margin-top: 5px; font-weight: 500; }
+
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; max-width: 1000px; width: 90%; margin-bottom: 40px;}
+
+        .portal-card { background: white; padding: 25px 20px; border-radius: 12px; box-shadow: 0 8px 15px rgba(0,0,0,0.06); text-align: center; cursor: pointer; text-decoration: none; transition: all 0.3s ease; border-top: 5px solid #ccc; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+        .portal-card:hover { transform: translateY(-8px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
         
-        .portal-icon { font-size: 50px; margin-bottom: 15px; }
-        .portal-title { font-size: 22px; font-weight: bold; color: #333; margin-bottom: 10px; }
-        .portal-desc { font-size: 14px; color: #777; line-height: 1.5; }
+        .portal-icon { font-size: 45px; margin-bottom: 10px; }
+        .portal-title { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 8px; }
+        .portal-desc { font-size: 13px; color: #666; line-height: 1.4; }
 
-        /* Custom Colors for Cards */
         .card-principal { border-top-color: #0d6efd; }
         .card-admin { border-top-color: #ff9800; }
         .card-driver { border-top-color: #28a745; }
         .card-parent { border-top-color: #6f42c1; }
 
-        .footer { margin-top: 50px; color: #888; font-size: 13px; }
+        /* NAYA: Enhanced Footer with Support */
+        .footer { width: 100%; background: #1a237e; color: white; text-align: center; padding: 20px 0; font-size: 13px; margin-top: auto;}
+        .support-box { background: rgba(255,255,255,0.1); display: inline-block; padding: 8px 20px; border-radius: 20px; margin-bottom: 10px; font-size: 14px;}
+        .support-box a { color: #ffeb3b; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>🏫 Sandila Public School</h1>
-        <p>Smart Fleet & Transport Management System</p>
+    <!-- EMERGENCY ALERT BANNER -->
+    <div class="alert-banner" id="alert-banner">
+        <div class="alert-ticker">
+            <span id="ticker-text">📢 Welcome to Sandila Public School Smart Transit System. Please drive safely and track buses in real-time.</span>
+        </div>
     </div>
 
+    <!-- TOP BAR (CLOCK & STATUS) -->
+    <div class="top-bar">
+        <div id="live-clock">🕒 Loading time...</div>
+        <div class="status-badge">
+            <div class="live-dot"></div>
+            <span>System Online | <b id="active-bus-count">0</b> Buses on Route</span>
+        </div>
+    </div>
+
+    <!-- HEADER & LOGO -->
+    <div class="header">
+        <!-- Aap 'logo.png' naam ki photo apne folder mein rakh sakte hain, ya URL badal sakte hain -->
+        <img src="https://img.icons8.com/color/96/school-building.png" alt="School Logo" class="school-logo">
+        <h1>Sandila Public School</h1>
+        <p>Premium Fleet & Transport Management System</p>
+    </div>
+
+    <!-- PORTAL GRID -->
     <div class="grid-container">
         
-        <!-- Principal Dashboard Link -->
         <a href="dashboard.html" class="portal-card card-principal">
             <div class="portal-icon">🗺️</div>
             <div class="portal-title">Principal Dashboard</div>
             <div class="portal-desc">Live master map, fleet tracking, and real-time student attendance analytics.</div>
         </a>
 
-        <!-- IT Admin Link -->
         <a href="admin.html" class="portal-card card-admin">
             <div class="portal-icon">⚙️</div>
             <div class="portal-title">IT Admin Portal</div>
             <div class="portal-desc">Manage bus fleets, register new students, and control system data.</div>
         </a>
 
-        <!-- Driver App Link -->
         <a href="driver.html" class="portal-card card-driver">
             <div class="portal-icon">🚌</div>
             <div class="portal-title">Driver App</div>
             <div class="portal-desc">Start route, broadcast live GPS, and manage student boarding.</div>
         </a>
 
-        <!-- Parent App Link -->
-        <a href="parents.html" class="portal-card card-parent">
+        <a href="parent.html" class="portal-card card-parent">
             <div class="portal-icon">👪</div>
             <div class="portal-title">Parent Portal</div>
             <div class="portal-desc">Track kids, set home location alarms, and manage daily leaves.</div>
@@ -68,9 +100,52 @@
 
     </div>
 
+    <!-- FOOTER HELPDESK -->
     <div class="footer">
-        Powered by Premium SaaS Architecture © 2026
+        <div class="support-box">
+            📞 Need Help? Contact Transport Helpdesk: <a href="tel:+919876543210">+91-98765-43210</a>
+        </div>
+        <div>Powered by Secure SaaS Architecture © 2026</div>
     </div>
 
+    <!-- FIREBASE & LOGIC SCRIPT -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        // 1. LIVE DIGITAL CLOCK
+        function updateClock() {
+            const now = new Date();
+            const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('live-clock').innerText = "🕒 " + now.toLocaleDateString('en-IN', options);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // 2. FIREBASE CONNECTION FOR LIVE BUS COUNT
+        const firebaseConfig = { 
+            apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE", 
+            authDomain: "schoolbustracking-d2f2d.firebaseapp.com", 
+            databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com", 
+            projectId: "schoolbustracking-d2f2d", 
+            storageBucket: "schoolbustracking-d2f2d.firebasestorage.app", 
+            messagingSenderId: "537002829038", 
+            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff" 
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const database = firebase.database();
+
+        // Count Active Buses (Buses that updated location in the last 12 hours)
+        database.ref('busLocations').on('value', snap => {
+            let activeCount = 0;
+            let nowTime = Date.now();
+            snap.forEach(child => {
+                let loc = child.val();
+                if(loc.lat && (nowTime - loc.timestamp < 12 * 60 * 60 * 1000)) {
+                    activeCount++;
+                }
+            });
+            document.getElementById('active-bus-count').innerText = activeCount;
+        });
+    </script>
 </body>
 </html>
