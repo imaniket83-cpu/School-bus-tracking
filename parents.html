@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parent App - Multi Bus Tracker</title>
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#17a2b8">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -92,7 +91,15 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE", authDomain: "schoolbustracking-d2f2d.firebaseapp.com", databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com", projectId: "schoolbustracking-d2f2d", storageBucket: "schoolbustracking-d2f2d.firebasestorage.app", messagingSenderId: "537002829038", appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff" };
+        const firebaseConfig = { 
+            apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE", 
+            authDomain: "schoolbustracking-d2f2d.firebaseapp.com", 
+            databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com", 
+            projectId: "schoolbustracking-d2f2d", 
+            storageBucket: "schoolbustracking-d2f2d.firebasestorage.app", 
+            messagingSenderId: "537002829038", 
+            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff" 
+        };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
 
@@ -157,7 +164,6 @@
                         let busName = globalBuses[kid.busId] ? globalBuses[kid.busId].name : kid.busId;
                         let isAbsent = kid.status === 'absent';
                         
-                        // NAYA LOGIC: Agar location null hai, toh track mat karne do, location set karwao
                         let actionArea = "";
                         if(!kid.stopLat || !kid.stopLng) {
                             actionArea = `
@@ -168,84 +174,4 @@
                             `;
                         } else {
                             let leaveBtn = isAbsent 
-                                ? `<button class="btn" style="background:#eee; color:#666; margin-top:10px; width:100%;" disabled>✅ Marked Absent for Today</button>`
-                                : `<button class="btn btn-danger" style="width:100%;" onclick="window.markAbsent('${kid.id}')">❌ Mark Absent Today</button>`;
-
-                            actionArea = `
-                                <button class="btn btn-primary" style="width:100%;" onclick="window.trackChild('${kid.name}', '${kid.busId}', '${kid.id}')" ${isAbsent ? 'disabled style="background:#ccc"' : ''}>📍 Track ${kid.name}'s Bus</button>
-                                ${leaveBtn}
-                            `;
-                        }
-
-                        html += `
-                        <div class="child-card ${isAbsent ? 'absent-card' : ''}">
-                            <div class="child-name">👦 ${kid.name} ${isAbsent ? '<span style="color:#dc3545; font-size:14px;">(On Leave)</span>' : ''}</div>
-                            <div class="child-bus">🚌 Assigned to: ${busName}</div>
-                            ${actionArea}
-                        </div>`;
-                    });
-                    document.getElementById('children-list').innerHTML = html;
-                }
-            });
-        };
-
-        // NAYA: Parent directly apne dashboard se apni location set karega
-        window.saveHomeLocation = function(childId) {
-            let btn = document.getElementById(`loc-btn-${childId}`);
-            btn.innerText = "Fetching GPS...";
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    database.ref('students/' + childId).update({
-                        stopLat: pos.coords.latitude,
-                        stopLng: pos.coords.longitude
-                    }).then(() => {
-                        alert("Location saved successfully! The 500m geofence alarm is now active.");
-                    });
-                }, () => { 
-                    alert("Please allow Location Permission in your browser!"); 
-                    btn.innerText = "📍 Set My Stop Location Now"; 
-                }, { enableHighAccuracy: true });
-            } else {
-                alert("GPS is not supported on this device.");
-            }
-        };
-
-        window.markAbsent = function(childId) {
-            if(confirm("Are you sure you want to mark absent for today?")) {
-                database.ref('students/' + childId + '/status').set('absent');
-            }
-        };
-
-        window.logoutParent = function() {
-            database.ref('students').off();
-            localStorage.removeItem('parentPhone');
-            document.getElementById('login-phone').value = ''; document.getElementById('login-pass').value = '';
-            window.showScreen('login-screen');
-        };
-
-        window.playAlarm = function() {
-            if(navigator.vibrate) navigator.vibrate([1000, 500, 1000, 500, 1000]);
-            let hornSound = new Audio('https://assets.mixkit.co/active_storage/sfx/989/989-preview.mp3');
-            hornSound.loop = true;
-            let playPromise = hornSound.play();
-            if (playPromise !== undefined) { playPromise.catch(e => console.log("Audio blocked", e)); }
-            setTimeout(() => { hornSound.pause(); hornSound.currentTime = 0; }, 4500); 
-        };
-
-        window.trackChild = function(childName, busId, childId) {
-            document.getElementById('display-child-name').innerText = childName;
-            document.getElementById('display-bus').innerText = globalBuses[busId] ? globalBuses[busId].name : busId.toUpperCase();
-            window.showScreen('map-screen');
-            
-            isAlarmTriggered = false; stopLat = null; stopLng = null;
-
-            if(!mapInstance) {
-                mapInstance = L.map('map').setView([20.5937, 78.9629], 5); 
-                L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(mapInstance);
-            }
-            
-            const busIcon = L.icon({ iconUrl: 'https://img.icons8.com/color/96/school-bus.png', iconSize: [45, 45], iconAnchor: [22, 22] });
-            
-            activeChildListener = childId;
-            database.ref('students/' + childId).on('value', (snapshot) => {
-                const data = snapshot.val();
+                                ? `<button class="btn" style="background:#eee; color:#666; margin-top:10px; width:100%;" disabled>✅ Marked
