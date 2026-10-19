@@ -59,9 +59,7 @@
             </select>
 
             <select id="driver-bus" class="input-field" style="font-weight: bold; color: #222;">
-                <option value="">-- Select Bus --</option>
-                <option value="bus1">Bus 1 (UP 30 AB 1111)</option>
-                <option value="bus2">Bus 2 (UP 30 XY 9999)</option>
+                <option value="">-- Loading Buses... --</option>
             </select>
             
             <input type="password" id="driver-pin" class="input-field" placeholder="Enter PIN (1234)">
@@ -74,7 +72,6 @@
     <div id="main-content">
         <div class="header" id="bus-header">🚍 Route Started</div>
         
-        <!-- NAYA: End Duty Button -->
         <button class="btn-end-duty" onclick="window.endDuty()">🛑 End Duty & Logout</button>
 
         <div class="container" id="student-list">
@@ -86,37 +83,44 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
-            authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
-            databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com",
-            projectId: "schoolbustracking-d2f2d",
-            storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
-            messagingSenderId: "537002829038",
-            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff"
+        const firebaseConfig = { 
+            apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE", 
+            authDomain: "schoolbustracking-d2f2d.firebaseapp.com", 
+            databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com", 
+            projectId: "schoolbustracking-d2f2d", 
+            storageBucket: "schoolbustracking-d2f2d.firebasestorage.app", 
+            messagingSenderId: "537002829038", 
+            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff" 
         };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
         
         let currentBusId = null;
         let watchId = null;
+        let globalBuses = {}; 
 
-        // NAYA: Auto-Login Check on Page Load
-        window.onload = function() {
-            let savedBus = localStorage.getItem('driverBus');
-            let savedName = localStorage.getItem('driverName');
-            
-            if(savedBus && savedName) {
-                // Agar data pehle se save hai, toh details form mein bhar do
-                document.getElementById('driver-name').value = savedName;
-                document.getElementById('driver-phone').value = localStorage.getItem('driverPhone');
-                document.getElementById('driver-shift').value = localStorage.getItem('driverShift');
-                document.getElementById('driver-bus').value = savedBus;
-                document.getElementById('driver-pin').value = "1234";
-                
-                // Seedha duty start kar do bina button dabaye
-                window.startDuty(true);
+        database.ref('buses').on('value', snap => {
+            globalBuses = snap.val() || {};
+            let busSelect = document.getElementById('driver-bus');
+            busSelect.innerHTML = '<option value="">-- Select Bus --</option>';
+            for(let key in globalBuses) {
+                busSelect.innerHTML += `<option value="${key}">${globalBuses[key].name}</option>`;
             }
+        });
+
+        window.onload = function() {
+            setTimeout(() => {
+                let savedBus = localStorage.getItem('driverBus');
+                let savedName = localStorage.getItem('driverName');
+                if(savedBus && savedName) {
+                    document.getElementById('driver-name').value = savedName;
+                    document.getElementById('driver-phone').value = localStorage.getItem('driverPhone');
+                    document.getElementById('driver-shift').value = localStorage.getItem('driverShift');
+                    document.getElementById('driver-bus').value = savedBus;
+                    document.getElementById('driver-pin').value = "1234";
+                    window.startDuty(true);
+                }
+            }, 1000); 
         };
 
         window.startDuty = function(isAutoStart = false) {
@@ -129,12 +133,8 @@
             if(!isAutoStart) {
                 if(!name || !phone || !busId) { alert("Fill all details!"); return; }
                 if(pin !== "1234") { alert("Wrong PIN!"); return; }
-                
-                // Pehli baar login par data hamesha ke liye save karein
-                localStorage.setItem('driverName', name);
-                localStorage.setItem('driverPhone', phone);
-                localStorage.setItem('driverShift', shift);
-                localStorage.setItem('driverBus', busId);
+                localStorage.setItem('driverName', name); localStorage.setItem('driverPhone', phone);
+                localStorage.setItem('driverShift', shift); localStorage.setItem('driverBus', busId);
             }
 
             currentBusId = busId;
@@ -146,127 +146,98 @@
                         document.getElementById('login-screen').style.display = "none";
                         document.getElementById('main-content').style.display = "block";
                         
-                        let busLabel = busId === 'bus1' ? 'Bus 1' : 'Bus 2';
+                        let busLabel = globalBuses[busId] ? globalBuses[busId].name : busId;
                         document.getElementById('bus-header').innerHTML = `${shift}<br>🚍 ${busLabel} | Driver: ${name}`;
 
                         database.ref('busLocations/' + currentBusId).set({
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude,
-                            timestamp: Date.now(),
-                            driverName: name,
-                            driverPhone: phone,
-                            shift: shift
+                            lat: position.coords.latitude, lng: position.coords.longitude, timestamp: Date.now(),
+                            driverName: name, driverPhone: phone, shift: shift
                         });
                     }, 
                     (error) => { alert("Turn on GPS/Location!"); document.getElementById('gps-status').style.display = 'none'; }, 
                     { enableHighAccuracy: true }
                 );
 
-                // Sirf naye login par status reset hoga (refresh par nahi)
                 if(!isAutoStart) {
+                    let todayDate = new Date().toDateString();
                     database.ref('students').once('value', snapshot => {
                         let updates = {};
                         snapshot.forEach(childSnap => {
                             let data = childSnap.val();
-                            if(data.busId === currentBusId && data.status !== 'absent') {
-                                updates[childSnap.key + '/status'] = 'pending';
+                            if(data.busId === currentBusId) {
+                                // Agar boarded tha kal ya absent ka purana date hai, toh reset kardo naye login par
+                                if(data.status !== 'absent' || (data.status === 'absent' && data.absentDate !== todayDate)) {
+                                    updates[childSnap.key + '/status'] = 'pending';
+                                    updates[childSnap.key + '/absentDate'] = null;
+                                }
                             }
                         });
-                        if(Object.keys(updates).length > 0) {
-                            database.ref('students').update(updates);
-                        }
+                        if(Object.keys(updates).length > 0) database.ref('students').update(updates);
                     });
                 }
-
                 window.loadStudentsForBus(currentBusId);
-            } else {
-                alert("GPS tracking not supported.");
-            }
+            } else { alert("GPS tracking not supported."); }
         };
 
-       
-       // NAYA: End Duty and Logout Function (Firebase update ke sath)
         window.endDuty = function() {
             if(confirm("Are you sure you want to end today's duty and logout?")) {
-                
-                // IMPORTANT: Firebase se is bus ki location delete kardo taaki admin panel me turant Inactive (Red) ho jaye
-                if(currentBusId) {
-                    database.ref('busLocations/' + currentBusId).remove();
-                }
-
-                // Browser ki memory clear karein
-                localStorage.removeItem('driverName');
-                localStorage.removeItem('driverPhone');
-                localStorage.removeItem('driverShift');
-                localStorage.removeItem('driverBus');
-
-                // GPS background tracking band karein
+                if(currentBusId) { database.ref('busLocations/' + currentBusId).remove(); }
+                localStorage.removeItem('driverName'); localStorage.removeItem('driverPhone');
+                localStorage.removeItem('driverShift'); localStorage.removeItem('driverBus');
                 if(watchId) { navigator.geolocation.clearWatch(watchId); }
-
-                // Screen ko wapas login par le jayein
                 document.getElementById('main-content').style.display = 'none';
                 document.getElementById('login-screen').style.display = 'flex';
                 document.getElementById('gps-status').style.display = 'none';
-                
-                // Form khali kar dein
-                document.getElementById('driver-name').value = '';
-                document.getElementById('driver-phone').value = '';
-                document.getElementById('driver-bus').value = '';
-                document.getElementById('driver-pin').value = '';
+                document.getElementById('driver-name').value = ''; document.getElementById('driver-phone').value = '';
+                document.getElementById('driver-bus').value = ''; document.getElementById('driver-pin').value = '';
             }
         };
 
         window.loadStudentsForBus = function(busId) {
             database.ref('students').on('value', (snapshot) => {
                 const listDiv = document.getElementById('student-list');
-                listDiv.innerHTML = '';
-                
-                let count = 0;
+                listDiv.innerHTML = ''; let count = 0;
                 snapshot.forEach((childSnap) => {
-                    let student = childSnap.val();
-                    let studentId = childSnap.key;
-                    
+                    let student = childSnap.val(); let studentId = childSnap.key;
                     if(student.busId === busId) {
                         count++;
                         
-                        let isAbsent = student.status === "absent";
+                        // SMART DATE AUTO-RESET LOGIC
+                        let todayDate = new Date().toDateString();
+                        let isAbsent = false;
+                        
+                        if(student.status === 'absent') {
+                            if(student.absentDate === todayDate) {
+                                isAbsent = true;
+                            } else {
+                                database.ref('students/' + studentId).update({ status: 'pending', absentDate: null });
+                            }
+                        }
+                        
                         let isBoarded = student.status === "boarded";
-                        
-                        let badgeClass = "badge pending";
-                        let badgeText = "Waiting";
-                        let cardClass = "card active";
-                        
+                        let badgeClass = "badge pending"; let badgeText = "Waiting"; let cardClass = "card active";
                         let btnHtml = `<button class="btn-board" onclick="window.markBoarded('${studentId}')">Mark as Boarded</button>`;
 
                         if (isAbsent) {
-                            badgeClass = "badge absent"; badgeText = "Absent Today";
-                            cardClass = "card absent";
+                            badgeClass = "badge absent"; badgeText = "Absent Today"; cardClass = "card absent";
                             btnHtml = `<button class="btn-board absent-btn" disabled>Student on Leave</button>`;
                         } else if (isBoarded) {
-                            badgeClass = "badge boarded"; badgeText = "Boarded";
-                            cardClass = "card";
+                            badgeClass = "badge boarded"; badgeText = "Boarded"; cardClass = "card";
                             btnHtml = `<button class="btn-board done" disabled>Already Boarded</button>`;
                         }
 
                         listDiv.innerHTML += `
                             <div class="${cardClass}">
-                                <div class="card-header">
-                                    <div class="student-name">${student.name}</div>
-                                    <div class="${badgeClass}">${badgeText}</div>
-                                </div>
-                                <div class="distance-text">📞 ${student.phone}</div>
-                                ${btnHtml}
-                            </div>
-                        `;
+                                <div class="card-header"><div class="student-name">${student.name}</div><div class="${badgeClass}">${badgeText}</div></div>
+                                <div class="distance-text">📞 ${student.phone}</div>${btnHtml}
+                            </div>`;
                     }
                 });
                 if(count === 0) listDiv.innerHTML = `<div style="text-align:center; color:#888;">No students assigned.</div>`;
             });
         };
 
-        window.markBoarded = function(studentId) {
-            database.ref('students/' + studentId + '/status').set('boarded');
-        };
+        window.markBoarded = function(studentId) { database.ref('students/' + studentId + '/status').set('boarded'); };
     </script>
 </body>
 </html>
