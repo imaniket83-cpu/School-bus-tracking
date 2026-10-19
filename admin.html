@@ -3,88 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Data Admin</title>
+    <title>School Admin Portal</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center;}
-        .box { background: white; padding: 30px; max-width: 450px; margin: auto; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .input-field { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size:15px; }
-        button { width: 95%; padding: 12px; background: #1a237e; color: white; border: none; border-radius: 5px; font-weight: bold; font-size:16px; cursor: pointer; }
-        .student-list { margin-top: 30px; text-align: left; max-height: 400px; overflow-y: auto; }
-        .student-item { padding: 15px; background: #fff; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #1a237e; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e9ecef; margin: 0; padding: 0; }
+        
+        /* Navbar */
+        .navbar { background-color: #1a237e; color: white; padding: 15px 20px; font-size: 20px; font-weight: bold; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        
+        /* Layout Grid */
+        .dashboard-container { display: flex; flex-wrap: wrap; padding: 20px; gap: 20px; justify-content: center; align-items: flex-start; }
+        
+        /* Panels */
+        .panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); flex: 1; min-width: 320px; max-width: 500px; box-sizing: border-box;}
+        .panel h2 { margin-top: 0; padding-bottom: 10px; border-bottom: 2px solid #eee; }
+        
+        .input-field { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box;}
+        .btn { width: 100%; padding: 12px; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .btn-bus { background: #ff9800; color: #222; }
+        .btn-student { background: #1a237e; }
+        
+        /* Lists */
+        .list-container { margin-top: 25px; max-height: 350px; overflow-y: auto; padding-right: 5px; }
+        .list-container h3 { color: #444; font-size: 16px; margin-bottom: 10px; }
+        .list-item { padding: 12px; background: #f8f9fa; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.02); font-size: 14px;}
+        .bus-item { border-left-color: #ff9800; font-weight: bold;}
+        .student-item { border-left-color: #1a237e; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2 style="color:#1a237e; margin-top:0;">👨‍🎓 Add New Student</h2>
-        <p style="font-size:13px; color:#666;">Only authorized admin can add students.</p>
-        
-        <input type="text" id="stu-name" class="input-field" placeholder="Student Full Name">
-        <input type="number" id="par-phone" class="input-field" placeholder="Parent Mobile Number (Login ID)">
-        <input type="text" id="par-pass" class="input-field" placeholder="Create Parent Password">
-        
-        <select id="bus-select" class="input-field" style="font-weight:bold;">
-            <option value="">-- Loading Buses... --</option>
-        </select>
 
-        <button onclick="addStudent()">Add Student & Give Access</button>
+    <div class="navbar">
+        ⚙️ School Administration Portal
     </div>
 
-    <div class="box" style="margin-top:20px;">
-        <h3 style="margin-top:0; color:#333;">Registered Students:</h3>
-        <div id="active-students" class="student-list">Loading...</div>
+    <div class="dashboard-container">
+        
+        <!-- SECTION 1: BUS MANAGEMENT -->
+        <div class="panel">
+            <h2 style="color: #ff9800;">🚌 Manage Buses</h2>
+            <p style="font-size: 13px; color: #666; margin-top:-5px;">Add new vehicles to the fleet</p>
+            
+            <input type="text" id="bus-id" class="input-field" placeholder="Bus ID (e.g., bus3, van1)">
+            <input type="text" id="bus-name" class="input-field" placeholder="Bus Name (e.g., Bus 3 - UP 32 AB 1234)">
+            
+            <button class="btn btn-bus" onclick="addBus()">➕ Add New Bus</button>
+
+            <div class="list-container">
+                <h3>Currently Active Buses:</h3>
+                <div id="active-buses">Loading...</div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: STUDENT MANAGEMENT -->
+        <div class="panel">
+            <h2 style="color: #1a237e;">👨‍🎓 Manage Students</h2>
+            <p style="font-size: 13px; color: #666; margin-top:-5px;">Register students & assign buses</p>
+            
+            <input type="text" id="stu-name" class="input-field" placeholder="Student Full Name">
+            <input type="number" id="par-phone" class="input-field" placeholder="Parent Mobile Number (Login ID)">
+            <input type="text" id="par-pass" class="input-field" placeholder="Create Parent Password">
+            
+            <select id="bus-select" class="input-field" style="font-weight:bold; color:#1a237e;">
+                <option value="">-- Loading Buses... --</option>
+            </select>
+
+            <button class="btn btn-student" onclick="addStudent()">➕ Register Student</button>
+
+            <div class="list-container">
+                <h3>Registered Students:</h3>
+                <div id="active-students">Loading...</div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE", authDomain: "schoolbustracking-d2f2d.firebaseapp.com", databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com", projectId: "schoolbustracking-d2f2d", storageBucket: "schoolbustracking-d2f2d.firebasestorage.app", messagingSenderId: "537002829038", appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff" };
+        const firebaseConfig = {
+            apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
+            authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
+            databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com",
+            projectId: "schoolbustracking-d2f2d",
+            storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
+            messagingSenderId: "537002829038",
+            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff"
+        };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
         let globalBuses = {};
 
-        // Fetch Dynamic Buses
+        // 1. FIREBASE LISTENER FOR BUSES (Updates both Bus List & Student Dropdown)
         database.ref('buses').on('value', snap => {
             globalBuses = snap.val() || {};
-            let options = '<option value="">-- Assign a Bus --</option>';
-            for(let key in globalBuses) { options += `<option value="${key}">${globalBuses[key].name}</option>`; }
-            document.getElementById('bus-select').innerHTML = options;
+            
+            let busOptions = '<option value="">-- Assign a Bus --</option>';
+            let activeBusesHtml = '';
+
+            for(let key in globalBuses) { 
+                // Dropdown ke liye
+                busOptions += `<option value="${key}">${globalBuses[key].name}</option>`; 
+                // List ke liye
+                activeBusesHtml += `<div class="list-item bus-item">🆔 ID: ${key} <br> 🚌 ${globalBuses[key].name}</div>`;
+            }
+            
+            document.getElementById('bus-select').innerHTML = busOptions;
+            document.getElementById('active-buses').innerHTML = activeBusesHtml || "No buses registered.";
         });
 
+        // 2. FIREBASE LISTENER FOR STUDENTS (Updates Student List)
+        database.ref('students').on('value', snap => {
+            let html = "";
+            snap.forEach(child => { 
+                let data = child.val();
+                let busName = globalBuses[data.busId] ? globalBuses[data.busId].name : data.busId;
+                
+                html += `<div class="list-item student-item">
+                    <b style="font-size:16px; color:#222;">${data.name}</b><br>
+                    <span style="color:#555;">📞 ${data.phone} | 🚌 ${busName}</span><br>
+                    <span style="font-weight:bold; color:${data.stopLat ? '#28a745' : '#dc3545'};">
+                        ${data.stopLat ? '✅ Location Set' : '⚠️ Location Pending'}
+                    </span>
+                </div>`; 
+            });
+            document.getElementById('active-students').innerHTML = html || "No students registered yet.";
+        });
+
+        // 3. ADD BUS FUNCTION
+        function addBus() {
+            let id = document.getElementById('bus-id').value.trim().toLowerCase();
+            let name = document.getElementById('bus-name').value.trim();
+            
+            if(!id || !name) { alert("Please enter Bus ID and Bus Name!"); return; }
+            if(id.includes(" ")) { alert("Bus ID should not have spaces (e.g. use bus3 or van1)"); return; }
+            
+            database.ref('buses/' + id).set({ name: name }).then(() => {
+                alert("Bus added to the system successfully!");
+                document.getElementById('bus-id').value = '';
+                document.getElementById('bus-name').value = '';
+            });
+        }
+
+        // 4. ADD STUDENT FUNCTION
         function addStudent() {
             let name = document.getElementById('stu-name').value.trim();
             let phone = document.getElementById('par-phone').value.trim();
             let pass = document.getElementById('par-pass').value.trim();
             let bus = document.getElementById('bus-select').value;
             
-            if(!name || !phone || !pass || !bus) { alert("Please fill all details!"); return; }
+            if(!name || !phone || !pass || !bus) { alert("Please fill all student details and select a bus!"); return; }
             
             let childId = "student_" + Date.now();
-            // Note: Stop Location is initially NULL. Parent will set it from their app.
+            
             database.ref('students/' + childId).set({
-                name: name, phone: phone, password: pass, busId: bus, status: "pending", stopLat: null, stopLng: null
+                name: name, 
+                phone: phone, 
+                password: pass, 
+                busId: bus, 
+                status: "pending", 
+                stopLat: null, 
+                stopLng: null
             }).then(() => {
-                alert("Student Added! Parent can now login using this Mobile & Password.");
+                alert("Student Registered! Parent can now login to their app.");
                 document.getElementById('stu-name').value = '';
                 document.getElementById('par-phone').value = '';
                 document.getElementById('par-pass').value = '';
+                document.getElementById('bus-select').value = '';
             });
         }
-
-        // Fetch all students for display
-        database.ref('students').on('value', snap => {
-            let html = "";
-            snap.forEach(child => { 
-                let data = child.val();
-                let busName = globalBuses[data.busId] ? globalBuses[data.busId].name : data.busId;
-                html += `<div class="student-item">
-                    <b>${data.name}</b><br>
-                    <small>📞 ${data.phone} | 🚌 ${busName}</small><br>
-                    <small style="color:${data.stopLat ? 'green' : 'red'}">${data.stopLat ? '✅ Location Set' : '❌ Location Not Set by Parent'}</small>
-                </div>`; 
-            });
-            document.getElementById('active-students').innerHTML = html || "No students registered yet.";
-        });
     </script>
 </body>
 </html>
