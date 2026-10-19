@@ -14,18 +14,12 @@
         .auth-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
         .auth-box h2 { margin-top: 0; color: #17a2b8; margin-bottom: 5px; }
         
-        .input-field, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .input-field { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; margin-top: 10px; transition: 0.3s; }
         .btn-primary { background-color: #17a2b8; }
-        .btn-secondary { background-color: #28a745; margin-bottom: 10px; }
-        .btn-warning { background-color: #ffb800; color: #222; margin-top: 20px;}
+        .btn-warning { background-color: #ffb800; color: #222;}
         .btn-danger { background-color: #dc3545; color: white; margin-top: 10px; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .link-text { color: #007bff; cursor: pointer; margin-top: 15px; display: block; font-size: 14px; font-weight: bold; text-decoration: underline;}
-        
-        .child-entry { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 15px; text-align: left; position: relative; }
-        .child-entry h4 { margin: 0 0 10px 0; color: #444; font-size: 14px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
-        .btn-add-more { background: #e9ecef; color: #333; border: 2px dashed #bbb; margin-bottom: 15px; }
         
         #dashboard-screen { display: none; padding: 20px; max-width: 400px; margin: auto; }
         .child-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: left; border-left: 5px solid #17a2b8;}
@@ -48,50 +42,25 @@
         .alert-box { background: white; padding: 30px; border-radius: 15px; text-align: center; width: 100%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: popIn 0.3s ease-out; border-top: 8px solid #dc3545;}
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .alert-box h2 { color: #dc3545; margin-top: 0; font-size: 24px; }
-        .alert-btn { background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer; transition: 0.3s; }
+        .alert-btn { background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer;}
     </style>
 </head>
 <body>
 
     <div id="login-screen" class="auth-container">
         <div class="auth-box">
-            <h2>👪 Parent Login</h2>
-            <input type="number" id="login-phone" class="input-field" placeholder="Mobile Number">
+            <h2>👪 Parent Portal</h2>
+            <p style="color:#666; font-size:14px; margin-bottom:15px;">Login provided by School Admin</p>
+            <input type="number" id="login-phone" class="input-field" placeholder="Registered Mobile Number">
             <input type="password" id="login-pass" class="input-field" placeholder="Password">
-            <button class="btn btn-primary" onclick="window.loginParent()">Login</button>
-            <span class="link-text" onclick="window.showScreen('register-screen')">New Parent? Register Here</span>
-        </div>
-    </div>
-
-    <div id="register-screen" class="auth-container" style="display: none;">
-        <div class="auth-box">
-            <h2>📝 Registration</h2>
-            <input type="number" id="reg-phone" class="input-field" placeholder="Parent Mobile Number">
-            <input type="password" id="reg-pass" class="input-field" placeholder="Create Password">
-            <div style="border-top: 2px solid #eee; margin: 15px 0;"></div>
-            <div id="children-container">
-                <div class="child-entry">
-                    <h4>Child 1</h4>
-                    <input type="text" class="input-field child-name" placeholder="Child's Full Name">
-                    <select class="input-field child-bus">
-                        <option value="">-- Select Bus --</option>
-                        <option value="bus1">Bus 1 (UP 30 AB 1111)</option>
-                        <option value="bus2">Bus 2 (UP 30 XY 9999)</option>
-                    </select>
-                </div>
-            </div>
-            <button class="btn btn-add-more" onclick="window.addAnotherChild()">➕ Add Another Child</button>
-            <button class="btn btn-secondary" onclick="window.getLocation()" id="loc-btn">📍 Save Home Location</button>
-            <p id="loc-status" style="font-size: 12px; color: #28a745; display: none; font-weight:bold;">Location Saved ✅</p>
-            <button class="btn btn-primary" onclick="window.registerParent()">Submit All Details</button>
-            <span class="link-text" onclick="window.showScreen('login-screen')">Back to Login</span>
+            <button class="btn btn-primary" onclick="window.loginParent()">Login Securely</button>
         </div>
     </div>
 
     <div id="dashboard-screen">
-        <h2 style="color: #333; text-align:center;">My Children</h2>
+        <h2 style="color: #333; text-align:center;">My Dashboard</h2>
         <div id="children-list"></div>
-        <button class="btn" style="background:#6c757d; margin-top:20px;" onclick="window.logoutParent()">Logout</button>
+        <button class="btn" style="background:#6c757d; margin-top:20px; width:100%;" onclick="window.logoutParent()">Logout</button>
     </div>
 
     <div id="map-screen">
@@ -101,18 +70,12 @@
             <p id="shift-info" style="margin:0 0 10px 0; color:#0d47a1; font-weight:bold; font-size:14px;"></p>
             
             <div class="bus-plate" id="display-bus">BUS INFO</div>
-            <div class="driver-box" id="driver-info-box">
-                👨‍✈️ Driver: <span id="driver-name-text">--</span> <br> 
-                📞 <a href="#" id="driver-phone-link">Call</a>
-            </div>
-
+            <div class="driver-box" id="driver-info-box">👨‍✈️ Driver: <span id="driver-name-text">--</span> <br> 📞 <a href="#" id="driver-phone-link">Call</a></div>
             <div style="border-top: 2px dashed #eee; margin: 10px 0;"></div>
             <div class="status">Tracking: <span id="display-child-name" style="color:#222;">...</span></div>
-            
             <div class="distance-box" id="live-distance-box">📍 Distance: <span id="dist-value">Calculating...</span></div>
             <div id="dist-text" style="margin-top: 10px;">Fetching status...</div>
-            
-            <button class="btn btn-warning" style="margin-top: 15px; padding: 8px;" onclick="window.showScreen('dashboard-screen')">🔙 Back to Dashboard</button>
+            <button class="btn btn-warning" style="margin-top: 15px; width:100%;" onclick="window.showScreen('dashboard-screen')">🔙 Back to Dashboard</button>
         </div>
     </div>
 
@@ -129,26 +92,17 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
-            authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
-            databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com",
-            projectId: "schoolbustracking-d2f2d",
-            storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
-            messagingSenderId: "537002829038",
-            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE", authDomain: "schoolbustracking-d2f2d.firebaseapp.com", databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com", projectId: "schoolbustracking-d2f2d", storageBucket: "schoolbustracking-d2f2d.firebasestorage.app", messagingSenderId: "537002829038", appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff" };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
 
-        let tempLat = null; let tempLng = null;
         let mapInstance = null; let busMarker = null; 
         let activeBusListener = null; let activeChildListener = null;
-        let childCount = 1;
-        
-        let isAlarmTriggered = false;
-        let stopLat = null; let stopLng = null;
+        let isAlarmTriggered = false; let stopLat = null; let stopLng = null;
         const ALARM_DISTANCE_METERS = 500; 
+        let globalBuses = {}; 
+
+        database.ref('buses').on('value', snap => { globalBuses = snap.val() || {}; });
 
         window.onload = function() {
             let savedPhone = localStorage.getItem('parentPhone');
@@ -157,81 +111,21 @@
 
         window.showScreen = function(screenId) {
             document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('register-screen').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'none';
             document.getElementById('map-screen').style.display = 'none';
-            
-            if(screenId === 'login-screen' || screenId === 'register-screen') {
-                document.getElementById(screenId).style.display = 'flex';
-            } else {
-                document.getElementById(screenId).style.display = 'block';
-            }
+            document.getElementById(screenId).style.display = (screenId === 'login-screen') ? 'flex' : 'block';
             
             if(screenId !== 'map-screen') {
                 if(activeBusListener) { database.ref('busLocations/' + activeBusListener).off(); activeBusListener = null; }
                 if(activeChildListener) { database.ref('students/' + activeChildListener).off(); activeChildListener = null; }
-                document.getElementById('driver-info-box').style.display = 'none';
-                document.getElementById('live-distance-box').style.display = 'none';
-                document.getElementById('shift-info').innerText = "";
+                document.getElementById('driver-info-box').style.display = 'none'; document.getElementById('live-distance-box').style.display = 'none';
             }
-        };
-
-        window.addAnotherChild = function() {
-            childCount++;
-            const container = document.getElementById('children-container');
-            const newDiv = document.createElement('div');
-            newDiv.className = 'child-entry';
-            newDiv.innerHTML = `<h4>Child ${childCount}</h4><input type="text" class="input-field child-name" placeholder="Child's Full Name"><select class="input-field child-bus"><option value="">-- Select Bus --</option><option value="bus1">Bus 1 (UP 30 AB 1111)</option><option value="bus2">Bus 2 (UP 30 XY 9999)</option></select>`;
-            container.appendChild(newDiv);
-        };
-
-        window.getLocation = function() {
-            const locBtn = document.getElementById('loc-btn');
-            locBtn.innerText = "Fetching...";
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    tempLat = pos.coords.latitude; tempLng = pos.coords.longitude;
-                    locBtn.style.display = 'none'; document.getElementById('loc-status').style.display = 'block';
-                }, () => { alert("Please allow location!"); locBtn.innerText = "📍 Save Home Location"; }, { enableHighAccuracy: true });
-            }
-        };
-
-        window.registerParent = function() {
-            let phone = document.getElementById('reg-phone').value.trim();
-            let pass = document.getElementById('reg-pass').value.trim();
-            if(!phone || !pass) { alert("Enter Parent Mobile and Password!"); return; }
-            if(!tempLat || !tempLng) { alert("Save Home Location first!"); return; }
-
-            let childEntries = document.getElementsByClassName('child-entry');
-            let childrenData = [];
-
-            for(let i=0; i<childEntries.length; i++) {
-                let name = childEntries[i].querySelector('.child-name').value.trim();
-                let bus = childEntries[i].querySelector('.child-bus').value;
-                if(!name || !bus) { alert(`Please fill Name and select Bus for Child ${i+1}`); return; }
-                childrenData.push({ name: name, busId: bus });
-            }
-
-            let promises = childrenData.map(kid => {
-                let childId = "child_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-                return database.ref('students/' + childId).set({ name: kid.name, phone: phone, password: pass, busId: kid.busId, status: "pending", stopLat: tempLat, stopLng: tempLng });
-            });
-
-            Promise.all(promises).then(() => {
-                alert("Registration Successful! Please Login.");
-                window.showScreen('login-screen');
-                document.getElementById('login-phone').value = phone;
-                document.getElementById('reg-phone').value = ''; document.getElementById('reg-pass').value = '';
-                document.getElementById('loc-status').style.display = 'none'; document.getElementById('loc-btn').style.display = 'block';
-                tempLat = null; tempLng = null;
-            });
         };
 
         window.loginParent = function() {
             let phone = document.getElementById('login-phone').value.trim();
             let pass = document.getElementById('login-pass').value.trim();
             if(!phone || !pass) { alert("Enter Phone and Password!"); return; }
-            document.getElementById('children-list').innerHTML = "<p>Loading...</p>";
             
             database.ref('students').once('value', (snapshot) => {
                 let found = false;
@@ -243,15 +137,13 @@
                     localStorage.setItem('parentPhone', phone);
                     window.loadDashboard(phone);
                 } else {
-                    alert("No account found or Wrong Password!");
-                    document.getElementById('children-list').innerHTML = "";
+                    alert("Account details incorrect or not registered by school!");
                 }
             });
         };
 
         window.loadDashboard = function(phone) {
             window.showScreen('dashboard-screen');
-            // Dashboard ko realtime (on) update par rakha hai
             database.ref('students').on('value', (snapshot) => {
                 let foundChildren = [];
                 snapshot.forEach((childSnap) => {
@@ -262,19 +154,34 @@
                 if(foundChildren.length > 0) {
                     let html = "";
                     foundChildren.forEach(kid => {
-                        let busName = kid.busId === 'bus1' ? 'Bus 1 (UP 30 AB 1111)' : 'Bus 2 (UP 30 XY 9999)';
+                        let busName = globalBuses[kid.busId] ? globalBuses[kid.busId].name : kid.busId;
                         let isAbsent = kid.status === 'absent';
                         
-                        let leaveBtn = isAbsent 
-                            ? `<button class="btn" style="background:#eee; color:#666; margin-top:10px;" disabled>✅ Marked Absent for Today</button>`
-                            : `<button class="btn btn-danger" onclick="window.markAbsent('${kid.id}')">❌ Mark Absent Today</button>`;
+                        // NAYA LOGIC: Agar location null hai, toh track mat karne do, location set karwao
+                        let actionArea = "";
+                        if(!kid.stopLat || !kid.stopLng) {
+                            actionArea = `
+                                <div style="background:#fff3cd; color:#856404; padding:8px; border-radius:5px; margin-bottom:10px; font-size:13px; font-weight:bold;">
+                                    ⚠️ Home/Stop Location not set. Setup required for Bus Alarm!
+                                </div>
+                                <button class="btn btn-warning" style="width:100%;" onclick="window.saveHomeLocation('${kid.id}')" id="loc-btn-${kid.id}">📍 Set My Stop Location Now</button>
+                            `;
+                        } else {
+                            let leaveBtn = isAbsent 
+                                ? `<button class="btn" style="background:#eee; color:#666; margin-top:10px; width:100%;" disabled>✅ Marked Absent for Today</button>`
+                                : `<button class="btn btn-danger" style="width:100%;" onclick="window.markAbsent('${kid.id}')">❌ Mark Absent Today</button>`;
+
+                            actionArea = `
+                                <button class="btn btn-primary" style="width:100%;" onclick="window.trackChild('${kid.name}', '${kid.busId}', '${kid.id}')" ${isAbsent ? 'disabled style="background:#ccc"' : ''}>📍 Track ${kid.name}'s Bus</button>
+                                ${leaveBtn}
+                            `;
+                        }
 
                         html += `
                         <div class="child-card ${isAbsent ? 'absent-card' : ''}">
                             <div class="child-name">👦 ${kid.name} ${isAbsent ? '<span style="color:#dc3545; font-size:14px;">(On Leave)</span>' : ''}</div>
                             <div class="child-bus">🚌 Assigned to: ${busName}</div>
-                            <button class="btn btn-primary" onclick="window.trackChild('${kid.name}', '${kid.busId}', '${kid.id}')" ${isAbsent ? 'disabled style="background:#ccc"' : ''}>📍 Track ${kid.name}'s Bus</button>
-                            ${leaveBtn}
+                            ${actionArea}
                         </div>`;
                     });
                     document.getElementById('children-list').innerHTML = html;
@@ -282,36 +189,52 @@
             });
         };
 
-        // NAYA: Mark Absent Function
+        // NAYA: Parent directly apne dashboard se apni location set karega
+        window.saveHomeLocation = function(childId) {
+            let btn = document.getElementById(`loc-btn-${childId}`);
+            btn.innerText = "Fetching GPS...";
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    database.ref('students/' + childId).update({
+                        stopLat: pos.coords.latitude,
+                        stopLng: pos.coords.longitude
+                    }).then(() => {
+                        alert("Location saved successfully! The 500m geofence alarm is now active.");
+                    });
+                }, () => { 
+                    alert("Please allow Location Permission in your browser!"); 
+                    btn.innerText = "📍 Set My Stop Location Now"; 
+                }, { enableHighAccuracy: true });
+            } else {
+                alert("GPS is not supported on this device.");
+            }
+        };
+
         window.markAbsent = function(childId) {
-            if(confirm("Are you sure you want to mark absent for today? The driver will be notified.")) {
+            if(confirm("Are you sure you want to mark absent for today?")) {
                 database.ref('students/' + childId + '/status').set('absent');
             }
         };
 
         window.logoutParent = function() {
-            database.ref('students').off(); // Realtime listener hatao
+            database.ref('students').off();
             localStorage.removeItem('parentPhone');
             document.getElementById('login-phone').value = ''; document.getElementById('login-pass').value = '';
             window.showScreen('login-screen');
         };
 
         window.playAlarm = function() {
-            if(navigator.vibrate) { navigator.vibrate([1000, 500, 1000, 500, 1000]); }
+            if(navigator.vibrate) navigator.vibrate([1000, 500, 1000, 500, 1000]);
             let hornSound = new Audio('https://assets.mixkit.co/active_storage/sfx/989/989-preview.mp3');
             hornSound.loop = true;
             let playPromise = hornSound.play();
             if (playPromise !== undefined) { playPromise.catch(e => console.log("Audio blocked", e)); }
-            
-            setTimeout(() => {
-                hornSound.pause();
-                hornSound.currentTime = 0;
-            }, 4500); 
+            setTimeout(() => { hornSound.pause(); hornSound.currentTime = 0; }, 4500); 
         };
 
         window.trackChild = function(childName, busId, childId) {
             document.getElementById('display-child-name').innerText = childName;
-            document.getElementById('display-bus').innerText = busId.toUpperCase();
+            document.getElementById('display-bus').innerText = globalBuses[busId] ? globalBuses[busId].name : busId.toUpperCase();
             window.showScreen('map-screen');
             
             isAlarmTriggered = false; stopLat = null; stopLng = null;
@@ -321,67 +244,8 @@
                 L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(mapInstance);
             }
             
-            const busIcon = L.icon({ 
-                iconUrl: 'https://img.icons8.com/color/96/school-bus.png', 
-                iconSize: [45, 45], 
-                iconAnchor: [22, 22] 
-            });
+            const busIcon = L.icon({ iconUrl: 'https://img.icons8.com/color/96/school-bus.png', iconSize: [45, 45], iconAnchor: [22, 22] });
             
             activeChildListener = childId;
             database.ref('students/' + childId).on('value', (snapshot) => {
                 const data = snapshot.val();
-                if(data) {
-                    stopLat = data.stopLat; stopLng = data.stopLng;
-                    if(data.status === 'boarded') {
-                        document.getElementById('dist-text').innerHTML = "<span style='color:#28a745; font-weight:bold; font-size:18px;'>✅ Boarded (Inside Bus)</span>";
-                        document.getElementById('live-distance-box').style.display = 'none'; 
-                    } else {
-                        document.getElementById('dist-text').innerHTML = "<span style='color:#ffb800; font-weight:bold; font-size:18px;'>⏳ Waiting for Bus</span>";
-                        document.getElementById('live-distance-box').style.display = 'block'; 
-                    }
-                }
-            });
-
-            activeBusListener = busId;
-            database.ref('busLocations/' + busId).on('value', (snapshot) => {
-                const data = snapshot.val();
-                if(data) {
-                    if(!busMarker) {
-                        busMarker = L.marker([data.lat, data.lng], {icon: busIcon}).addTo(mapInstance);
-                    } else {
-                        busMarker.setLatLng([data.lat, data.lng]);
-                    }
-                    mapInstance.setView([data.lat, data.lng], 17); 
-                    
-                    // NAYA: Shift Info Display
-                    if(data.shift) {
-                        document.getElementById('shift-info').innerText = data.shift;
-                    }
-
-                    if(data.driverName && data.driverPhone) {
-                        document.getElementById('driver-info-box').style.display = 'block';
-                        document.getElementById('driver-name-text').innerText = data.driverName;
-                        document.getElementById('driver-phone-link').innerText = data.driverPhone;
-                        document.getElementById('driver-phone-link').href = "tel:" + data.driverPhone;
-                    }
-
-                    if(stopLat && stopLng) {
-                        let distanceInMeters = mapInstance.distance([data.lat, data.lng], [stopLat, stopLng]);
-                        let displayDist = distanceInMeters > 1000 
-                                          ? (distanceInMeters / 1000).toFixed(1) + " km" 
-                                          : Math.round(distanceInMeters) + " meters";
-                                          
-                        document.getElementById('dist-value').innerText = displayDist + " away";
-
-                        if (distanceInMeters <= ALARM_DISTANCE_METERS && !isAlarmTriggered) {
-                            isAlarmTriggered = true; 
-                            window.playAlarm(); 
-                            document.getElementById('custom-alert').style.display = 'flex'; 
-                        }
-                    }
-                }
-            });
-        };
-    </script>
-</body>
-</html>
