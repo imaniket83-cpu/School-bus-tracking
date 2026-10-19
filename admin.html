@@ -3,173 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - School Bus</title>
-    <!-- PWA Setup -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#343a40">
+    <title>Student Data Admin</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
-        .header { background-color: #343a40; color: white; padding: 18px; text-align: center; font-size: 22px; font-weight: bold; }
-        .container { padding: 20px; max-width: 600px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h3 { margin-top: 0; color: #333; border-bottom: 2px solid #f4f7f6; padding-bottom: 10px; }
-        input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .btn { padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; color: white; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; transition: 0.3s; }
-        .btn-add { background-color: #007bff; }
-        .btn-reset { background-color: #ffb800; color: #222; }
-        .btn-delete { background-color: #dc3545; padding: 6px 12px; font-size: 14px; width: auto; margin-top: 0; }
-        .student-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
-        .student-item:last-child { border-bottom: none; }
-        .student-info { font-size: 16px; font-weight: bold; color: #333; }
-        .student-subtext { font-size: 12px; color: #666; }
-
-        /* LOGIN SCREEN CSS */
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        #login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 300px; text-align: center; }
-        #main-content { display: none; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center;}
+        .box { background: white; padding: 30px; max-width: 450px; margin: auto; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .input-field { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size:15px; }
+        button { width: 95%; padding: 12px; background: #1a237e; color: white; border: none; border-radius: 5px; font-weight: bold; font-size:16px; cursor: pointer; }
+        .student-list { margin-top: 30px; text-align: left; max-height: 400px; overflow-y: auto; }
+        .student-item { padding: 15px; background: #fff; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #1a237e; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
-
-    <!-- LOGIN FUNCTION SABSE UPAR (TAAKI KABHI FAIL NA HO) -->
-    <script>
-        function checkPin() {
-            let pin = document.getElementById('admin-pin').value;
-            if(pin === "9999") { 
-                document.getElementById('login-screen').style.display = "none";
-                document.getElementById('main-content').style.display = "block";
-            } else {
-                alert("Wrong PIN! Try again.");
-            }
-        }
-    </script>
 </head>
 <body>
+    <div class="box">
+        <h2 style="color:#1a237e; margin-top:0;">👨‍🎓 Add New Student</h2>
+        <p style="font-size:13px; color:#666;">Only authorized admin can add students.</p>
+        
+        <input type="text" id="stu-name" class="input-field" placeholder="Student Full Name">
+        <input type="number" id="par-phone" class="input-field" placeholder="Parent Mobile Number (Login ID)">
+        <input type="text" id="par-pass" class="input-field" placeholder="Create Parent Password">
+        
+        <select id="bus-select" class="input-field" style="font-weight:bold;">
+            <option value="">-- Loading Buses... --</option>
+        </select>
 
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen">
-        <div id="login-box">
-            <h2 style="margin-top: 0;">⚙️ Admin Login</h2>
-            <p style="color:#666; font-size:14px;">Enter PIN to access dashboard</p>
-            <input type="password" id="admin-pin" placeholder="Enter PIN">
-            <button class="btn btn-add" onclick="checkPin()">Login</button>
-        </div>
+        <button onclick="addStudent()">Add Student & Give Access</button>
     </div>
 
-    <!-- MAIN ADMIN DASHBOARD -->
-    <div id="main-content">
-        <div class="header">⚙️ Admin Dashboard</div>
-        
-        <div class="container">
-            <div class="card">
-                <h3>Route Management</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Roz subah trip shuru karne se pehle sabhi bacchon ka status 'Pending' karne ke liye click karein.</p>
-                <button class="btn btn-reset" onclick="resetAllStatus()">🔄 Reset All to Pending</button>
-            </div>
+    <div class="box" style="margin-top:20px;">
+        <h3 style="margin-top:0; color:#333;">Registered Students:</h3>
+        <div id="active-students" class="student-list">Loading...</div>
+    </div>
 
-            <div class="card">
-                <h3>Add New Student</h3>
-                <input type="text" id="stu-id" placeholder="Student ID (e.g., student-03)">
-                <input type="text" id="stu-name" placeholder="Full Name (e.g., Priya)">
-                <input type="number" id="stu-lat" placeholder="Stop Latitude (e.g., 27.1234)">
-                <input type="number" id="stu-lng" placeholder="Stop Longitude (e.g., 80.5432)">
-                <button class="btn btn-add" onclick="addStudent()">➕ Add Student</button>
-            </div>
-
-            <div class="card">
-                <h3>Enrolled Students</h3>
-                <div id="admin-student-list">
-                    <p style="color: #888;">Loading students...</p>
-                </div>
-            </div>
-        </div>
-    </div> 
-
-    <!-- FIREBASE AND OTHER SCRIPTS -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE",
-            authDomain: "schoolbustracking-d2f2d.firebaseapp.com",
-            databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com",
-            projectId: "schoolbustracking-d2f2d",
-            storageBucket: "schoolbustracking-d2f2d.firebasestorage.app",
-            messagingSenderId: "537002829038",
-            appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff",
-            measurementId: "G-DQCZ4N7YVN"
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        const firebaseConfig = { apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE", authDomain: "schoolbustracking-d2f2d.firebaseapp.com", databaseURL: "https://schoolbustracking-d2f2d-default-rtdb.firebaseio.com", projectId: "schoolbustracking-d2f2d", storageBucket: "schoolbustracking-d2f2d.firebasestorage.app", messagingSenderId: "537002829038", appId: "1:537002829038:web:cb55b2a25dfc2f4d4ebfff" };
+        firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        window.addStudent = function() {
-            let id = document.getElementById('stu-id').value.trim();
+        let globalBuses = {};
+
+        // Fetch Dynamic Buses
+        database.ref('buses').on('value', snap => {
+            globalBuses = snap.val() || {};
+            let options = '<option value="">-- Assign a Bus --</option>';
+            for(let key in globalBuses) { options += `<option value="${key}">${globalBuses[key].name}</option>`; }
+            document.getElementById('bus-select').innerHTML = options;
+        });
+
+        function addStudent() {
             let name = document.getElementById('stu-name').value.trim();
-            let lat = document.getElementById('stu-lat').value.trim();
-            let lng = document.getElementById('stu-lng').value.trim();
-
-            if(!id || !name || !lat || !lng) {
-                alert("Please fill all details!");
-                return;
-            }
-
-            database.ref('student/' + id).set({
-                name: name,
-                status: "pending",
-                stopLat: lat,
-                stopLng: lng
+            let phone = document.getElementById('par-phone').value.trim();
+            let pass = document.getElementById('par-pass').value.trim();
+            let bus = document.getElementById('bus-select').value;
+            
+            if(!name || !phone || !pass || !bus) { alert("Please fill all details!"); return; }
+            
+            let childId = "student_" + Date.now();
+            // Note: Stop Location is initially NULL. Parent will set it from their app.
+            database.ref('students/' + childId).set({
+                name: name, phone: phone, password: pass, busId: bus, status: "pending", stopLat: null, stopLng: null
             }).then(() => {
-                alert("Student Added Successfully!");
-                document.getElementById('stu-id').value = '';
+                alert("Student Added! Parent can now login using this Mobile & Password.");
                 document.getElementById('stu-name').value = '';
-                document.getElementById('stu-lat').value = '';
-                document.getElementById('stu-lng').value = '';
+                document.getElementById('par-phone').value = '';
+                document.getElementById('par-pass').value = '';
             });
         }
 
-        window.deleteStudent = function(id) {
-            if(confirm("Are you sure you want to delete this student?")) {
-                database.ref('student/' + id).remove();
-            }
-        }
-
-        window.resetAllStatus = function() {
-            if(confirm("Are you sure? This will reset everyone's status to Pending.")) {
-                database.ref('student').once('value', (snapshot) => {
-                    let updates = {};
-                    snapshot.forEach((child) => {
-                        updates[child.key + '/status'] = "pending";
-                    });
-                    database.ref('student').update(updates).then(() => {
-                        alert("Route reset successful! All statuses are pending.");
-                    });
-                });
-            }
-        }
-
-        database.ref('student').on('value', (snapshot) => {
-            const listDiv = document.getElementById('admin-student-list');
-            listDiv.innerHTML = '';
-            
-            const data = snapshot.val();
-            if(data) {
-                for(let key in data) {
-                    let stu = data[key];
-                    listDiv.innerHTML += `
-                        <div class="student-item">
-                            <div>
-                                <div class="student-info">${stu.name}</div>
-                                <div class="student-subtext">ID: ${key} | Status: ${stu.status}</div>
-                            </div>
-                            <button class="btn btn-delete" onclick="deleteStudent('${key}')">Delete</button>
-                        </div>
-                    `;
-                }
-            } else {
-                listDiv.innerHTML = '<p style="color: #888;">No students found.</p>';
-            }
+        // Fetch all students for display
+        database.ref('students').on('value', snap => {
+            let html = "";
+            snap.forEach(child => { 
+                let data = child.val();
+                let busName = globalBuses[data.busId] ? globalBuses[data.busId].name : data.busId;
+                html += `<div class="student-item">
+                    <b>${data.name}</b><br>
+                    <small>📞 ${data.phone} | 🚌 ${busName}</small><br>
+                    <small style="color:${data.stopLat ? 'green' : 'red'}">${data.stopLat ? '✅ Location Set' : '❌ Location Not Set by Parent'}</small>
+                </div>`; 
+            });
+            document.getElementById('active-students').innerHTML = html || "No students registered yet.";
         });
     </script>
 </body>
