@@ -184,9 +184,16 @@
             }
         };
 
-        // NAYA: End Duty and Logout Function
+       
+       // NAYA: End Duty and Logout Function (Firebase update ke sath)
         window.endDuty = function() {
             if(confirm("Are you sure you want to end today's duty and logout?")) {
+                
+                // IMPORTANT: Firebase se is bus ki location delete kardo taaki admin panel me turant Inactive (Red) ho jaye
+                if(currentBusId) {
+                    database.ref('busLocations/' + currentBusId).remove();
+                }
+
                 // Browser ki memory clear karein
                 localStorage.removeItem('driverName');
                 localStorage.removeItem('driverPhone');
