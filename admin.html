@@ -7,13 +7,10 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e9ecef; margin: 0; padding: 0; }
         
-        /* Navbar */
         .navbar { background-color: #1a237e; color: white; padding: 15px 20px; font-size: 20px; font-weight: bold; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         
-        /* Layout Grid */
         .dashboard-container { display: flex; flex-wrap: wrap; padding: 20px; gap: 20px; justify-content: center; align-items: flex-start; }
         
-        /* Panels */
         .panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); flex: 1; min-width: 320px; max-width: 500px; box-sizing: border-box;}
         .panel h2 { margin-top: 0; padding-bottom: 10px; border-bottom: 2px solid #eee; }
         
@@ -22,12 +19,15 @@
         .btn-bus { background: #ff9800; color: #222; }
         .btn-student { background: #1a237e; }
         
-        /* Lists */
-        .list-container { margin-top: 25px; max-height: 350px; overflow-y: auto; padding-right: 5px; }
+        .list-container { margin-top: 25px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
         .list-container h3 { color: #444; font-size: 16px; margin-bottom: 10px; }
-        .list-item { padding: 12px; background: #f8f9fa; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.02); font-size: 14px;}
+        .list-item { position: relative; padding: 12px; background: #f8f9fa; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.02); font-size: 14px;}
         .bus-item { border-left-color: #ff9800; font-weight: bold;}
         .student-item { border-left-color: #1a237e; }
+        
+        /* NAYA: Delete Button Design */
+        .btn-delete { position: absolute; right: 10px; top: 12px; background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-delete:hover { background: #c82333; }
     </style>
 </head>
 <body>
@@ -41,7 +41,7 @@
         <!-- SECTION 1: BUS MANAGEMENT -->
         <div class="panel">
             <h2 style="color: #ff9800;">🚌 Manage Buses</h2>
-            <p style="font-size: 13px; color: #666; margin-top:-5px;">Add new vehicles to the fleet</p>
+            <p style="font-size: 13px; color: #666; margin-top:-5px;">Add or remove vehicles from the fleet</p>
             
             <input type="text" id="bus-id" class="input-field" placeholder="Bus ID (e.g., bus3, van1)">
             <input type="text" id="bus-name" class="input-field" placeholder="Bus Name (e.g., Bus 3 - UP 32 AB 1234)">
@@ -57,7 +57,7 @@
         <!-- SECTION 2: STUDENT MANAGEMENT -->
         <div class="panel">
             <h2 style="color: #1a237e;">👨‍🎓 Manage Students</h2>
-            <p style="font-size: 13px; color: #666; margin-top:-5px;">Register students & assign buses</p>
+            <p style="font-size: 13px; color: #666; margin-top:-5px;">Register or remove students</p>
             
             <input type="text" id="stu-name" class="input-field" placeholder="Student Full Name">
             <input type="number" id="par-phone" class="input-field" placeholder="Parent Mobile Number (Login ID)">
@@ -94,7 +94,7 @@
 
         let globalBuses = {};
 
-        // 1. FIREBASE LISTENER FOR BUSES (Updates both Bus List & Student Dropdown)
+        // 1. FIREBASE LISTENER FOR BUSES
         database.ref('buses').on('value', snap => {
             globalBuses = snap.val() || {};
             
@@ -102,25 +102,33 @@
             let activeBusesHtml = '';
 
             for(let key in globalBuses) { 
-                // Dropdown ke liye
                 busOptions += `<option value="${key}">${globalBuses[key].name}</option>`; 
-                // List ke liye
-                activeBusesHtml += `<div class="list-item bus-item">🆔 ID: ${key} <br> 🚌 ${globalBuses[key].name}</div>`;
+                
+                // NAYA: Bus list mein delete button lagaya
+                activeBusesHtml += `
+                <div class="list-item bus-item">
+                    🆔 ID: ${key} <br> 🚌 ${globalBuses[key].name}
+                    <button class="btn-delete" onclick="deleteBus('${key}')">🗑️ Delete</button>
+                </div>`;
             }
             
             document.getElementById('bus-select').innerHTML = busOptions;
             document.getElementById('active-buses').innerHTML = activeBusesHtml || "No buses registered.";
         });
 
-        // 2. FIREBASE LISTENER FOR STUDENTS (Updates Student List)
+        // 2. FIREBASE LISTENER FOR STUDENTS
         database.ref('students').on('value', snap => {
             let html = "";
             snap.forEach(child => { 
                 let data = child.val();
+                let studentId = child.key;
                 let busName = globalBuses[data.busId] ? globalBuses[data.busId].name : data.busId;
                 
-                html += `<div class="list-item student-item">
-                    <b style="font-size:16px; color:#222;">${data.name}</b><br>
+                // NAYA: Student list mein delete button lagaya
+                html += `
+                <div class="list-item student-item">
+                    <b style="font-size:16px; color:#222;">${data.name}</b>
+                    <button class="btn-delete" onclick="deleteStudent('${studentId}')">🗑️ Delete</button><br>
                     <span style="color:#555;">📞 ${data.phone} | 🚌 ${busName}</span><br>
                     <span style="font-weight:bold; color:${data.stopLat ? '#28a745' : '#dc3545'};">
                         ${data.stopLat ? '✅ Location Set' : '⚠️ Location Pending'}
@@ -130,11 +138,10 @@
             document.getElementById('active-students').innerHTML = html || "No students registered yet.";
         });
 
-        // 3. ADD BUS FUNCTION
+        // 3. ADD BUS
         function addBus() {
             let id = document.getElementById('bus-id').value.trim().toLowerCase();
             let name = document.getElementById('bus-name').value.trim();
-            
             if(!id || !name) { alert("Please enter Bus ID and Bus Name!"); return; }
             if(id.includes(" ")) { alert("Bus ID should not have spaces (e.g. use bus3 or van1)"); return; }
             
@@ -145,7 +152,7 @@
             });
         }
 
-        // 4. ADD STUDENT FUNCTION
+        // 4. ADD STUDENT
         function addStudent() {
             let name = document.getElementById('stu-name').value.trim();
             let phone = document.getElementById('par-phone').value.trim();
@@ -157,13 +164,7 @@
             let childId = "student_" + Date.now();
             
             database.ref('students/' + childId).set({
-                name: name, 
-                phone: phone, 
-                password: pass, 
-                busId: bus, 
-                status: "pending", 
-                stopLat: null, 
-                stopLng: null
+                name: name, phone: phone, password: pass, busId: bus, status: "pending", stopLat: null, stopLng: null
             }).then(() => {
                 alert("Student Registered! Parent can now login to their app.");
                 document.getElementById('stu-name').value = '';
@@ -171,6 +172,20 @@
                 document.getElementById('par-pass').value = '';
                 document.getElementById('bus-select').value = '';
             });
+        }
+
+        // 5. NAYA: DELETE STUDENT
+        function deleteStudent(studentId) {
+            if(confirm("Are you sure you want to permanently delete this student's record?")) {
+                database.ref('students/' + studentId).remove();
+            }
+        }
+
+        // 6. NAYA: DELETE BUS
+        function deleteBus(busId) {
+            if(confirm("Warning: Deleting this bus will remove it from the system. Are you sure?")) {
+                database.ref('buses/' + busId).remove();
+            }
         }
     </script>
 </body>
