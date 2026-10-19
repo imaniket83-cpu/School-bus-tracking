@@ -37,6 +37,8 @@
         .btn-board { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; background-color: #007bff; cursor: pointer; transition: 0.3s; }
         .btn-board.done { background-color: #6c757d; cursor: not-allowed; }
         .btn-board.absent-btn { background-color: #dc3545; cursor: not-allowed; }
+
+        .btn-end-duty { width: 90%; margin: 15px 5%; padding: 12px; background-color: #dc3545; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -51,7 +53,6 @@
             
             <div style="border-top: 2px dashed #eee; margin: 15px 0;"></div>
 
-            <!-- NAYA: Morning/Evening Shift Option -->
             <select id="driver-shift" class="input-field" style="background:#e3f2fd; color:#0d47a1; font-weight:bold;">
                 <option value="Morning Pickup">🌅 Morning Pickup</option>
                 <option value="Evening Drop">🌇 Evening Drop</option>
@@ -72,6 +73,10 @@
 
     <div id="main-content">
         <div class="header" id="bus-header">🚍 Route Started</div>
+        
+        <!-- NAYA: End Duty Button -->
+        <button class="btn-end-duty" onclick="window.endDuty()">🛑 End Duty & Logout</button>
+
         <div class="container" id="student-list">
             <div style="text-align:center; margin-top:30px; color:#888;">Fetching students for this bus...</div>
         </div>
@@ -96,20 +101,45 @@
         let currentBusId = null;
         let watchId = null;
 
-        window.startDuty = function() {
+        // NAYA: Auto-Login Check on Page Load
+        window.onload = function() {
+            let savedBus = localStorage.getItem('driverBus');
+            let savedName = localStorage.getItem('driverName');
+            
+            if(savedBus && savedName) {
+                // Agar data pehle se save hai, toh details form mein bhar do
+                document.getElementById('driver-name').value = savedName;
+                document.getElementById('driver-phone').value = localStorage.getItem('driverPhone');
+                document.getElementById('driver-shift').value = localStorage.getItem('driverShift');
+                document.getElementById('driver-bus').value = savedBus;
+                document.getElementById('driver-pin').value = "1234";
+                
+                // Seedha duty start kar do bina button dabaye
+                window.startDuty(true);
+            }
+        };
+
+        window.startDuty = function(isAutoStart = false) {
             let name = document.getElementById('driver-name').value.trim();
             let phone = document.getElementById('driver-phone').value.trim();
             let shift = document.getElementById('driver-shift').value;
             let busId = document.getElementById('driver-bus').value;
             let pin = document.getElementById('driver-pin').value;
 
-            if(!name || !phone || !busId) { alert("Fill all details!"); return; }
-            if(pin !== "1234") { alert("Wrong PIN!"); return; }
+            if(!isAutoStart) {
+                if(!name || !phone || !busId) { alert("Fill all details!"); return; }
+                if(pin !== "1234") { alert("Wrong PIN!"); return; }
+                
+                // Pehli baar login par data hamesha ke liye save karein
+                localStorage.setItem('driverName', name);
+                localStorage.setItem('driverPhone', phone);
+                localStorage.setItem('driverShift', shift);
+                localStorage.setItem('driverBus', busId);
+            }
 
             currentBusId = busId;
             document.getElementById('gps-status').style.display = 'block';
 
-            // Start GPS Tracking
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(
                     (position) => {
@@ -132,23 +162,50 @@
                     { enableHighAccuracy: true }
                 );
 
-                // NAYA: Duty start hote hi, is bus ke baccho ka status reset karna (taki kal ka boarded hat jaye)
-                database.ref('students').once('value', snapshot => {
-                    let updates = {};
-                    snapshot.forEach(childSnap => {
-                        let data = childSnap.val();
-                        if(data.busId === currentBusId && data.status !== 'absent') {
-                            updates[childSnap.key + '/status'] = 'pending';
+                // Sirf naye login par status reset hoga (refresh par nahi)
+                if(!isAutoStart) {
+                    database.ref('students').once('value', snapshot => {
+                        let updates = {};
+                        snapshot.forEach(childSnap => {
+                            let data = childSnap.val();
+                            if(data.busId === currentBusId && data.status !== 'absent') {
+                                updates[childSnap.key + '/status'] = 'pending';
+                            }
+                        });
+                        if(Object.keys(updates).length > 0) {
+                            database.ref('students').update(updates);
                         }
                     });
-                    if(Object.keys(updates).length > 0) {
-                        database.ref('students').update(updates);
-                    }
-                });
+                }
 
                 window.loadStudentsForBus(currentBusId);
             } else {
                 alert("GPS tracking not supported.");
+            }
+        };
+
+        // NAYA: End Duty and Logout Function
+        window.endDuty = function() {
+            if(confirm("Are you sure you want to end today's duty and logout?")) {
+                // Browser ki memory clear karein
+                localStorage.removeItem('driverName');
+                localStorage.removeItem('driverPhone');
+                localStorage.removeItem('driverShift');
+                localStorage.removeItem('driverBus');
+
+                // GPS background tracking band karein
+                if(watchId) { navigator.geolocation.clearWatch(watchId); }
+
+                // Screen ko wapas login par le jayein
+                document.getElementById('main-content').style.display = 'none';
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('gps-status').style.display = 'none';
+                
+                // Form khali kar dein
+                document.getElementById('driver-name').value = '';
+                document.getElementById('driver-phone').value = '';
+                document.getElementById('driver-bus').value = '';
+                document.getElementById('driver-pin').value = '';
             }
         };
 
