@@ -162,7 +162,18 @@
                     let html = "";
                     foundChildren.forEach(kid => {
                         let busName = globalBuses[kid.busId] ? globalBuses[kid.busId].name : kid.busId;
-                        let isAbsent = kid.status === 'absent';
+                        
+                        // SMART DATE AUTO-RESET LOGIC
+                        let todayDate = new Date().toDateString();
+                        let isAbsent = false;
+                        
+                        if(kid.status === 'absent') {
+                            if(kid.absentDate === todayDate) {
+                                isAbsent = true; 
+                            } else {
+                                database.ref('students/' + kid.id).update({ status: 'pending', absentDate: null });
+                            }
+                        }
                         
                         let actionArea = "";
                         if(!kid.stopLat || !kid.stopLng) {
@@ -174,7 +185,7 @@
                             `;
                         } else {
                             let leaveBtn = isAbsent 
-                                ? `<button class="btn" style="background:#eee; color:#666; margin-top:10px; width:100%;" disabled>✅ Marked Absent for Today</button>`
+                                ? `<button class="btn" style="background:#28a745; color:white; margin-top:10px; width:100%;" onclick="markPresent('${kid.id}')">🔄 Cancel Leave (Mark Present)</button>`
                                 : `<button class="btn btn-danger" style="width:100%;" onclick="markAbsent('${kid.id}')">❌ Mark Absent Today</button>`;
 
                             actionArea = `
@@ -217,7 +228,17 @@
 
         function markAbsent(childId) {
             if(confirm("Are you sure you want to mark absent for today?")) {
-                database.ref('students/' + childId + '/status').set('absent');
+                let todayDate = new Date().toDateString();
+                database.ref('students/' + childId).update({ 
+                    status: 'absent',
+                    absentDate: todayDate
+                });
+            }
+        }
+
+        function markPresent(childId) {
+            if(confirm("Are you sure you want to cancel the leave? Driver will be notified.")) {
+                database.ref('students/' + childId).update({ status: 'pending', absentDate: null });
             }
         }
 
