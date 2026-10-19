@@ -8,11 +8,9 @@
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; }
         
-        /* Navbar */
         .navbar { background-color: #1a237e; color: white; padding: 15px 20px; font-size: 22px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .school-name { font-size: 16px; font-weight: normal; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; }
 
-        /* Stats Container */
         .stats-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; }
         .stat-card { flex: 1; min-width: 150px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #ccc; }
         .stat-card h3 { margin: 0; font-size: 32px; color: #333; }
@@ -23,14 +21,11 @@
         .border-green { border-bottom-color: #198754; }
         .border-red { border-bottom-color: #dc3545; }
 
-        /* Main Content Grid */
         .main-grid { display: flex; flex-wrap: wrap; padding: 0 20px 20px 20px; gap: 20px; }
         
-        /* Map Area */
         .map-section { flex: 2; min-width: 300px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 65vh; position: relative; }
         #admin-map { width: 100%; height: 100%; }
 
-        /* Sidebar - Active Buses */
         .sidebar { flex: 1; min-width: 250px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 65vh; overflow-y: auto; box-sizing: border-box; }
         .sidebar h2 { margin-top: 0; color: #1a237e; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
@@ -39,6 +34,8 @@
         .bus-detail { font-size: 13px; color: #555; margin-bottom: 3px; }
         .bus-shift { display: inline-block; background: #e3f2fd; color: #0d47a1; font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: bold; margin-top: 5px; }
         
+        /* Custom map marker style to remove background */
+        .custom-bus-emoji { background: transparent; border: none; }
     </style>
 </head>
 <body>
@@ -96,20 +93,20 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
 
-        // Map Initialization
         let adminMap = L.map('admin-map').setView([20.5937, 78.9629], 5); 
         L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(adminMap);
         
-        let busMarkers = {}; // Store all active bus markers
+        let busMarkers = {}; 
 
-        const busIcon = L.icon({ 
-            iconUrl: 'https://img.icons8.com/color/96/school-bus.png', 
+        // NAYA: 100% Guaranteed Load hone wala Emoji Icon
+        const busIcon = L.divIcon({ 
+            html: '<div style="font-size: 35px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">🚌</div>',
+            className: 'custom-bus-emoji',
             iconSize: [40, 40], 
             iconAnchor: [20, 20],
             popupAnchor: [0, -20]
         });
 
-        // 1. Live Student Analytics (Counters)
         database.ref('students').on('value', (snapshot) => {
             let total = 0; let waiting = 0; let boarded = 0; let absent = 0;
             
@@ -127,10 +124,9 @@
             document.getElementById('absent-students').innerText = absent;
         });
 
-        // 2. Live Master Map & Sidebar Logic
         database.ref('busLocations').on('value', (snapshot) => {
             let activeBusesHTML = "";
-            let bounds = []; // To zoom map to fit all buses
+            let bounds = []; 
             
             let hasActiveBuses = false;
 
@@ -138,13 +134,10 @@
                 let busId = child.key;
                 let data = child.val();
                 
-                // Maine yahan se 12 ghante wala time-lock hata diya hai.
-                // Ab agar database mein latitude/longitude hai, toh bus turant dikhegi!
                 if(data.lat && data.lng) {
                     hasActiveBuses = true;
                     let busLabel = busId.toUpperCase();
                     
-                    // Update Map Markers
                     if(!busMarkers[busId]) {
                         busMarkers[busId] = L.marker([data.lat, data.lng], {icon: busIcon}).addTo(adminMap);
                         busMarkers[busId].bindPopup(`<b>${busLabel}</b><br>Driver: ${data.driverName || 'Unknown'}`);
@@ -153,7 +146,6 @@
                     }
                     bounds.push([data.lat, data.lng]);
 
-                    // Update Sidebar List
                     activeBusesHTML += `
                         <div class="bus-card">
                             <div class="bus-title">🚍 ${busLabel}</div>
@@ -174,18 +166,6 @@
                 document.getElementById('active-buses-list').innerHTML = `<p style="color: #888; font-size: 14px; text-align: center; margin-top: 50px;">No buses are currently on duty.</p>`;
             }
         });
-
-            if(hasActiveBuses) {
-                document.getElementById('active-buses-list').innerHTML = activeBusesHTML;
-                // Auto adjust map zoom to fit all active buses
-                if(bounds.length > 0) {
-                    adminMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
-                }
-            } else {
-                document.getElementById('active-buses-list').innerHTML = `<p style="color: #888; font-size: 14px; text-align: center; margin-top: 50px;">No buses are currently on duty.</p>`;
-            }
-        });
-
     </script>
 </body>
 </html>
