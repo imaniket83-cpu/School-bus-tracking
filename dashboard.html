@@ -138,10 +138,9 @@
                 let busId = child.key;
                 let data = child.val();
                 
-                // Check if bus data is fresh (updated in last 12 hours)
-                let isFresh = (Date.now() - data.timestamp) < (12 * 60 * 60 * 1000);
-                
-                if(isFresh) {
+                // Maine yahan se 12 ghante wala time-lock hata diya hai.
+                // Ab agar database mein latitude/longitude hai, toh bus turant dikhegi!
+                if(data.lat && data.lng) {
                     hasActiveBuses = true;
                     let busLabel = busId.toUpperCase();
                     
@@ -165,6 +164,16 @@
                     `;
                 }
             });
+
+            if(hasActiveBuses) {
+                document.getElementById('active-buses-list').innerHTML = activeBusesHTML;
+                if(bounds.length > 0) {
+                    adminMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+                }
+            } else {
+                document.getElementById('active-buses-list').innerHTML = `<p style="color: #888; font-size: 14px; text-align: center; margin-top: 50px;">No buses are currently on duty.</p>`;
+            }
+        });
 
             if(hasActiveBuses) {
                 document.getElementById('active-buses-list').innerHTML = activeBusesHTML;
