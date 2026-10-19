@@ -3,80 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Bus Tracker</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#007bff">
+    <title>School Transit - Central Portal</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; text-align: center; }
-        .header { background-color: #007bff; color: white; padding: 25px 15px; font-size: 24px; font-weight: 800; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .container { padding: 30px 20px; display: flex; flex-direction: column; gap: 20px; max-width: 400px; margin: auto; }
-        .btn { padding: 18px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; color: white; cursor: pointer; text-decoration: none; display: block; transition: 0.3s; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .btn-driver { background-color: #28a745; }
-        .btn-parent { background-color: #17a2b8; }
-        .btn-admin { background-color: #343a40; }
-        .btn-install { background-color: #ffb800; color: #222; display: none; border: 2px dashed #222; } /* Hide by default */
-        .icon { font-size: 30px; margin-bottom: 5px; display: block; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, #f4f7f6 0%, #e0eafc 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { color: #1a237e; font-size: 40px; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
+        .header p { color: #555; font-size: 18px; margin-top: 10px; font-weight: 500; }
+
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; max-width: 900px; width: 90%; }
+
+        .portal-card { background: white; padding: 30px 20px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.08); text-align: center; cursor: pointer; text-decoration: none; transition: all 0.3s ease; border-top: 6px solid #ccc; }
+        .portal-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+        
+        .portal-icon { font-size: 50px; margin-bottom: 15px; }
+        .portal-title { font-size: 22px; font-weight: bold; color: #333; margin-bottom: 10px; }
+        .portal-desc { font-size: 14px; color: #777; line-height: 1.5; }
+
+        /* Custom Colors for Cards */
+        .card-principal { border-top-color: #0d6efd; }
+        .card-admin { border-top-color: #ff9800; }
+        .card-driver { border-top-color: #28a745; }
+        .card-parent { border-top-color: #6f42c1; }
+
+        .footer { margin-top: 50px; color: #888; font-size: 13px; }
     </style>
 </head>
 <body>
-    <div class="header">🚍 School Bus Tracker</div>
-    
-    <div class="container">
-        <h3>Welcome! Please select your portal:</h3>
-        
-        <!-- CUSTOM INSTALL BUTTON -->
-        <button id="install-btn" class="btn btn-install">
-            <span class="icon">📲</span>
-            Install App on Phone
-        </button>
 
-        <a href="driver.html" class="btn btn-driver">
-            <span class="icon">🚌</span>
-            Driver Login
-        </a>
-        
-        <a href="parents.html?id=student-01" class="btn btn-parent">
-            <span class="icon">👪</span>
-            Parent Portal
-        </a>
-        
-        <a href="admin.html" class="btn btn-admin">
-            <span class="icon">⚙️</span>
-            Admin Dashboard
-        </a>
+    <div class="header">
+        <h1>🏫 Sandila Public School</h1>
+        <p>Smart Fleet & Transport Management System</p>
     </div>
 
-    <script>
-        // Service Worker Register (Background functions)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
+    <div class="grid-container">
+        
+        <!-- Principal Dashboard Link -->
+        <a href="dashboard.html" class="portal-card card-principal">
+            <div class="portal-icon">🗺️</div>
+            <div class="portal-title">Principal Dashboard</div>
+            <div class="portal-desc">Live master map, fleet tracking, and real-time student attendance analytics.</div>
+        </a>
 
-        // Install Button Logic
-        let deferredPrompt;
-        const installBtn = document.getElementById('install-btn');
+        <!-- IT Admin Link -->
+        <a href="admin.html" class="portal-card card-admin">
+            <div class="portal-icon">⚙️</div>
+            <div class="portal-title">IT Admin Portal</div>
+            <div class="portal-desc">Manage bus fleets, register new students, and control system data.</div>
+        </a>
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Chrome ka default chota notification roko
-            e.preventDefault();
-            // Event ko save karo taaki button dabne par use kar sakein
-            deferredPrompt = e;
-            // Hamara custom Install Button show karo
-            installBtn.style.display = 'block';
-        });
+        <!-- Driver App Link -->
+        <a href="driver.html" class="portal-card card-driver">
+            <div class="portal-icon">🚌</div>
+            <div class="portal-title">Driver App</div>
+            <div class="portal-desc">Start route, broadcast live GPS, and manage student boarding.</div>
+        </a>
 
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                // Install popup show karo
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('App Installed');
-                    installBtn.style.display = 'none'; // Install hone ke baad button hide kar do
-                }
-                deferredPrompt = null;
-            }
-        });
-    </script>
+        <!-- Parent App Link -->
+        <a href="parent.html" class="portal-card card-parent">
+            <div class="portal-icon">👪</div>
+            <div class="portal-title">Parent Portal</div>
+            <div class="portal-desc">Track kids, set home location alarms, and manage daily leaves.</div>
+        </a>
+
+    </div>
+
+    <div class="footer">
+        Powered by Premium SaaS Architecture © 2026
+    </div>
+
 </body>
 </html>
