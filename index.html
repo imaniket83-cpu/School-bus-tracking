@@ -7,25 +7,37 @@
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, #f4f7f6 0%, #e0eafc 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
         
-        /* NAYA: Emergency Alert Banner */
         .alert-banner { background-color: #dc3545; color: white; width: 100%; padding: 8px 0; font-size: 14px; font-weight: bold; font-family: monospace; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .alert-ticker { width: 100%; overflow: hidden; white-space: nowrap; }
         .alert-ticker span { display: inline-block; padding-left: 100%; animation: scrollTicker 15s linear infinite; }
         @keyframes scrollTicker { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-        /* NAYA: Top Bar with Clock and Status */
-        .top-bar { width: 90%; max-width: 1000px; display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 13px; font-weight: bold; color: #555; background: rgba(255,255,255,0.7); padding: 10px 20px; border-radius: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); box-sizing: border-box;}
+        .top-bar { width: 90%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 13px; font-weight: bold; color: #555; background: rgba(255,255,255,0.7); padding: 10px 20px; border-radius: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); box-sizing: border-box;}
         .status-badge { background: #d4edda; color: #155724; padding: 5px 12px; border-radius: 20px; border: 1px solid #c3e6cb; display: flex; align-items: center; gap: 5px;}
         .live-dot { width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; animation: blink 1.5s infinite; }
         @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.4;} 100% {opacity: 1;} }
 
         .header { text-align: center; margin: 30px 0; }
-        /* NAYA: Logo Placeholder */
         .school-logo { max-height: 80px; margin-bottom: 10px; border-radius: 10px; }
         .header h1 { color: #1a237e; font-size: 38px; margin: 0; text-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
         .header p { color: #555; font-size: 16px; margin-top: 5px; font-weight: 500; }
 
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; max-width: 1000px; width: 90%; margin-bottom: 40px;}
+        /* YAHAN CHANGE KIYA HAI: Grid layout ko 2x2 ke liye force kiya hai */
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); /* Hamesha 2 columns banayega */
+            gap: 25px; 
+            max-width: 800px; /* Width thodi adjust ki taaki 2 cards sundar lagein */
+            width: 90%; 
+            margin-bottom: 40px;
+        }
+
+        /* Mobile View ke liye 1 column kar diya */
+        @media (max-width: 650px) {
+            .grid-container {
+                grid-template-columns: 1fr; 
+            }
+        }
 
         .portal-card { background: white; padding: 25px 20px; border-radius: 12px; box-shadow: 0 8px 15px rgba(0,0,0,0.06); text-align: center; cursor: pointer; text-decoration: none; transition: all 0.3s ease; border-top: 5px solid #ccc; display: flex; flex-direction: column; justify-content: center; align-items: center;}
         .portal-card:hover { transform: translateY(-8px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
@@ -39,7 +51,6 @@
         .card-driver { border-top-color: #28a745; }
         .card-parent { border-top-color: #6f42c1; }
 
-        /* NAYA: Enhanced Footer with Support */
         .footer { width: 100%; background: #1a237e; color: white; text-align: center; padding: 20px 0; font-size: 13px; margin-top: auto;}
         .support-box { background: rgba(255,255,255,0.1); display: inline-block; padding: 8px 20px; border-radius: 20px; margin-bottom: 10px; font-size: 14px;}
         .support-box a { color: #ffeb3b; text-decoration: none; font-weight: bold; }
@@ -47,14 +58,12 @@
 </head>
 <body>
 
-    <!-- EMERGENCY ALERT BANNER -->
     <div class="alert-banner" id="alert-banner">
         <div class="alert-ticker">
             <span id="ticker-text">📢 Welcome to Sandila Public School Smart Transit System. Please drive safely and track buses in real-time.</span>
         </div>
     </div>
 
-    <!-- TOP BAR (CLOCK & STATUS) -->
     <div class="top-bar">
         <div id="live-clock">🕒 Loading time...</div>
         <div class="status-badge">
@@ -63,15 +72,12 @@
         </div>
     </div>
 
-    <!-- HEADER & LOGO -->
     <div class="header">
-        <!-- Aap 'logo.png' naam ki photo apne folder mein rakh sakte hain, ya URL badal sakte hain -->
         <img src="https://img.icons8.com/color/96/school-building.png" alt="School Logo" class="school-logo">
         <h1>Sandila Public School</h1>
         <p>Premium Fleet & Transport Management System</p>
     </div>
 
-    <!-- PORTAL GRID -->
     <div class="grid-container">
         
         <a href="dashboard.html" class="portal-card card-principal">
@@ -100,7 +106,6 @@
 
     </div>
 
-    <!-- FOOTER HELPDESK -->
     <div class="footer">
         <div class="support-box">
             📞 Need Help? Contact Transport Helpdesk: <a href="tel:+919876543210">+91-98765-43210</a>
@@ -108,11 +113,9 @@
         <div>Powered by Secure SaaS Architecture © 2026</div>
     </div>
 
-    <!-- FIREBASE & LOGIC SCRIPT -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
-        // 1. LIVE DIGITAL CLOCK
         function updateClock() {
             const now = new Date();
             const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
@@ -121,7 +124,6 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 2. FIREBASE CONNECTION FOR LIVE BUS COUNT
         const firebaseConfig = { 
             apiKey: "AIzaSyAiBYBGWj1ieiKC5thPuRrnL9zmMHJXQhE", 
             authDomain: "schoolbustracking-d2f2d.firebaseapp.com", 
@@ -134,7 +136,6 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const database = firebase.database();
 
-        // Count Active Buses (Buses that updated location in the last 12 hours)
         database.ref('busLocations').on('value', snap => {
             let activeCount = 0;
             let nowTime = Date.now();
